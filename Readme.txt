@@ -29,9 +29,15 @@ Installation Instructions:
  1)- Edit the script to change some options (autoinstall, kustom modules)
  2)- Open terminal
  3)- Run the install.sh script (Just drag and drop file the rest is automatic), give root acess whes the sudo prompt appear
- 4)- rename the directory linux-latest with the creted version (for future use see b1)
- 5)- a directory is created
- 4)- sudo apt-get install of the 3 pakages created or the packages are auto installed if you activated the option in the script
+ 4)- a directory is created and after kernel compilation will contain the latest and greates deb packages of the linux Kernel: 
+       linux-headers-xxxxxxxxxxx_amd64.deb
+       linux-image-xxxxxxxxxxx_amd64.deb
+       linux-libc-xxxxxxxxxxx_amd64.deb
+ 5)- rename the directory linux-latest with the creted version number linux-xxxxxxxxxxx (for future use see b1)
+ 6)- Install the 3 pakages 
+        sudo apt-get install linux-headers-xxxxxxxxxxx_amd64.deb linux-image-xxxxxxxxxxx_amd64.deb  linux-libc-xxxxxxxxxxx_amd64.deb
+     or the packages are auto installed if you activated the option in the script
+ 7)- Reboot and enjoy the new kernel
 
 Removal instructions:
 
