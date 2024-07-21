@@ -73,5 +73,5 @@ Change log:
 
 V0.1: 2023-12-28
   -Initial version for personal use
-V0.2: 2022-07-21
+V0.2: 2024-07-21
   -First release: Adding many functionality
