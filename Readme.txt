@@ -25,10 +25,12 @@ WARNING & DISCLAIMER: ━━━━━━━━━━━━━━━━━━━�
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 Installation Instructions:
+ 0)- Make the scrit executable and copy to a directory where you will store the created debs 
  1)- Edit the script to change some options (autoinstall, kustom modules)
  2)- Open terminal
- 3)- Run the install.sh script (Just drag and drop file the rest is automatic)
+ 3)- Run the install.sh script (Just drag and drop file the rest is automatic), give root acess whes the sudo prompt appear
  4)- rename the directory linux-latest with the creted version (for future use see b1)
+ 5)- a directory is created
  4)- sudo apt-get install of the 3 pakages created or the packages are auto installed if you activated the option in the script
 
 Removal instructions:
