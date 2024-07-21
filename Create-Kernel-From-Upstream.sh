@@ -1,6 +1,6 @@
 #!/bin/bash
 #This script will compile a kernel and create the deb packages
-#Copy it in the kernel folder and run it in a sh terminal
+#Copy it in the a folder and run it in a sh terminal by drag and drop
 
 echo  " "
 echo  " ##################################################################"
