@@ -21,7 +21,7 @@ echo  ""
 
 #Install libs
 sudo apt-get install build-essential libncurses-dev bison flex libssl-dev libelf-dev dwarves debhelper
-sudo apt-get install wget
+sudo apt-get install wget unzip
 
 #Change to local directory
 echo  ""
