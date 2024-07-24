@@ -29,7 +29,7 @@ Installation Instructions:
  1)- Edit the script to change some options (autoinstall, kustom modules)
  2)- Open terminal
  3)- Run the install.sh script (Just drag and drop file the rest is automatic), give root acess whes the sudo prompt appear
- 4)- a directory is created and after kernel compilation will contain the latest and greates deb packages of the linux Kernel: 
+ 4)- a directory is created and after kernel compilation will contain the latest and greatest deb packages of the linux Kernel: 
        linux-headers-xxxxxxxxxxx_amd64.deb
        linux-image-xxxxxxxxxxx_amd64.deb
        linux-libc-xxxxxxxxxxx_amd64.deb
