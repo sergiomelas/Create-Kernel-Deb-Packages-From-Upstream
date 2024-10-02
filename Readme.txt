@@ -85,3 +85,5 @@ V0.1: 2023-12-28
   -Initial version for personal use
 V0.2: 2024-07-21
   -First release: Adding many functionality
+V0.3: 2024-10-02
+  -Corrected bug on old kernel modules removal

@@ -54,7 +54,26 @@ rm linux-image*-dbg_*amd64.deb
 #To install automatically uncomment next line
 #sudo dpkg -i linux-*.deb
 
-#Uncomment to remove old modules of deleted kernels
-#sudo rm -r   $(dpkg -S /lib/modules/* 2>&1 | grep "no path found matching pattern" | awk '{ print $NF }' | tr "\n" " ")
+#Comment to remove old modules of deleted kernels
+exit 0
+
+echo Cleaning Kernel Modules:
+modulestr=$(dpkg -S /lib/modules/* 2>&1 | grep "no path found matching pattern" | awk '{ print $NF }' | tr "\n" " ")
+if [ -z "$modulestr" ]
+then
+  echo "No Modules to Remove"
+else
+  modulearr=($modulestr)
+  for i in "${modulearr[@]}"
+  do
+  :
+  if [[ $i = *'amd64'* ]]; then
+    echo "Skipping Stock Kernel modules": $i
+  else
+    echo "Removing Kernel Modules": $i
+    sudo rm -r   $i
+  fi
+  done
+fi
 
 
