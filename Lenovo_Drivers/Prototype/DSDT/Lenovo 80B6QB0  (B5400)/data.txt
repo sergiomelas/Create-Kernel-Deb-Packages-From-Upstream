@@ -1,4 +1,0 @@
-sudo dmidecode -s system-family
-B5400
-sudo dmidecode -s system-product-name
-80B6QB0
