@@ -1,0 +1,8 @@
+sudo dmidecode -s system-family
+IdeaPad 3 15ALC6 Ub
+sudo dmidecode -s system-product-name
+82KU
+
+Provider:
+wizard-28
+
