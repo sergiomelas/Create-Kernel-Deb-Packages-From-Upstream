@@ -1,0 +1,4 @@
+System Product Name: 90T1007GES
+System Family: Ideacentre Gaming 5-17IAB7
+Provider:PenPenIsGod
+
