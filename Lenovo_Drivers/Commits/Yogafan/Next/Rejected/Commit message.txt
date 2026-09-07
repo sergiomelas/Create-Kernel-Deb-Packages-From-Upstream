@@ -1,0 +1,14 @@
+hwmon: (yogafan) Add support for new Lenovo models
+
+Add DMI quirk entries and map correct ACPI paths and configurations for
+additional Lenovo laptop models: Yoga 14cACN 2021, IdeaPad 3 15ALC6 Ub
+and Yoga 740-15IML.
+
+DMI product family matching is finally preferred over product name to
+reliably distinguish identical model numbers with different internal
+fan layouts:
+MODEL (DMI PN) | FAMILY / SERIES    | FULL ACPI OBJECT PATH
+82KU           | IdeaPad 3 15ALC6   | \_SB.PCI0.LPC0.EC0.FAN0
+82KU           | IdeaPad 3 15ALC6 ub| \_SB.PCI0.LPC0.EC0.FANS/FA2S
+
+Signed-off-by: Sergio Melas <sergiomelas@gmail.com>

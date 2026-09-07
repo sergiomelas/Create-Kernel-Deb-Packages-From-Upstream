@@ -1,0 +1,179 @@
+From c94ed72baf763512a3cb6eaa04075b77ebee750d Mon Sep 17 00:00:00 2001
+From: Sergio Melas <sergiomelas@gmail.com>
+Date: Sun, 6 Sep 2026 03:26:04 +0200
+Subject: [PATCH] hwmon: (yogafan) Add support for new Lenovo models
+
+Add DMI quirk entries and map correct ACPI paths and configurations for
+additional Lenovo laptop models: Yoga 14cACN 2021, IdeaPad 3 15ALC6 Ub
+and Yoga 740-15IML.
+
+DMI product family matching is finally preferred over product name to
+reliably distinguish identical model numbers with different internal
+fan layouts:
+MODEL (DMI PN) | FAMILY / SERIES    | FULL ACPI OBJECT PATH
+82KU           | IdeaPad 3 15ALC6   | \_SB.PCI0.LPC0.EC0.FAN0
+82KU           | IdeaPad 3 15ALC6 ub| \_SB.PCI0.LPC0.EC0.FANS/FA2S
+
+Signed-off-by: Sergio Melas <sergiomelas@gmail.com>
+---
+ Documentation/hwmon/yogafan.rst | 40 +++++++++++------------
+ drivers/hwmon/yogafan.c         | 58 +++++++++++++++++++++------------
+ 2 files changed, 57 insertions(+), 41 deletions(-)
+
+diff --git a/Documentation/hwmon/yogafan.rst b/Documentation/hwmon/yogafan.rst
+index 9ff5db5dc..a7e628bc3 100644
+--- a/Documentation/hwmon/yogafan.rst
++++ b/Documentation/hwmon/yogafan.rst
+@@ -85,27 +85,26 @@ immediately to ensure the user knows the fan has stopped.
+ 
+ ::
+ 
+- MODEL (DMI PN) | FAMILY / SERIES  | EC OFFSET | FULL ACPI OBJECT PATH          | WIDTH  | MULTiplier
++ MODEL (DMI PN) | FAMILY / SERIES    | EC OFFSET | FULL ACPI OBJECT PATH          | WIDTH  | MULTiplier
+  ----------------------------------------------------------------------------------------------------
+- 82N7           | Yoga 14cACN      | 0x06      | \_SB.PCI0.LPC0.EC0.FANS        |  8-bit | 100
+- 80V2 / 81C3    | Yoga 710/720     | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
+- 83E2           | Yoga Pro 7       | 0xFE      | \_SB.PCI0.LPC0.EC0.FANS        |  8-bit | 100
+- 83DN           | Yoga Pro 9 16IMH9 | 0x06/0xFE | \_SB.PC00.LPCB.EC0.FANS/FA2S  |  8-bit | 100
+- 82A2 / 82A3    | Yoga Slim 7      | 0x06      | \_SB.PCI0.LPC0.EC0.FANS        |  8-bit | 100
+- 81YM / 82FG    | IdeaPad 5        | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
+- 82JW / 82JU    | Legion 5 (AMD)   | 0xFE/0xFF | \_SB.PCI0.LPC0.EC0.FANS (Fan1) | 16-bit | 1
+- 82JW / 82JU    | Legion 5 (AMD)   | 0xFE/0xFF | \_SB.PCI0.LPC0.EC0.FA2S (Fan2) | 16-bit | 1
+- 82WQ           | Legion 7i (Int)  | 0xFE/0xFF | \_SB.PCI0.LPC0.EC0.FANS (Fan1) | 16-bit | 1
+- 82WQ           | Legion 7i (Int)  | 0xFE/0xFF | \_SB.PCI0.LPC0.EC0.FA2S (Fan2) | 16-bit | 1
+- 82XV / 83DV    | LOQ 15/16        | 0xFE/0xFF | \_SB.PCI0.LPC0.EC0.FANS /FA2S  | 16-bit | 1
+- 83AK           | ThinkBook G6     | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
+- 81X1           | Flex 5           | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
+- 83KF           | XiaoXinPro 13ARE | 0x06/0xFE | \_SB.PCI0.LPC0.EC0.FANS/FA2S   |  8-bit | 100
+- 82KU           | IdeaPad 3 15ALC6 | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
+- 83RU           | Legion Pro 7 16  | 0x03/0x06 | \_SB.PCI0.LPC0.EC0.FANS/FA2S   |  8-bit | 100
+- 83KF           | Yoga Pro 7 14IAH | 0x06      | \_SB.PC00.LPCB.EC0.FANS        |  8-bit | 100
+- 83BS           | Yoga 7 16ARP8    | 0x03/0x06 | \_SB.PCI0.LPC0.EC0.FANS/FA2S   |  8-bit | 100
+- *Legacy*       | Pre-2020 Models  | 0x06      | \_SB.PCI0.LPC.EC.FAN0          |  8-bit | 100
++ 82N7           | Yoga 14cACN        | 0x06      | \_SB.PCI0.LPC0.EC0.FANS        |  8-bit | 100
++ 80V2 / 81C3    | Yoga 710/720       | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
++ 83E2 / 83DN    | Yoga Pro 7/9       | 0xFE      | \_SB.PCI0.LPC0.EC0.FANS        |  8-bit | 100
++ 82A2 / 82A3    | Yoga Slim 7        | 0x06      | \_SB.PCI0.LPC0.EC0.FANS        |  8-bit | 100
++ 81YM / 82FG    | IdeaPad 5          | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
++ 82JW / 82JU    | Legion 5 (AMD)     | 0xFE/0xFF | \_SB.PCI0.LPC0.EC0.FANS/FA2S   | 16-bit | 1
++ 82WQ           | Legion 7i (Int)    | 0xFE/0xFF | \_SB.PCI0.LPC0.EC0.FANS/FA2S   | 16-bit | 1
++ 82XV / 83DV    | LOQ 15/16          | 0xFE/0xFF | \_SB.PCI0.LPC0.EC0.FANS/FA2S   | 16-bit | 1
++ 83AK           | ThinkBook G6       | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
++ 81TD           | Yoga 740-15IML     | 0x06      | \_SB.PCI0.LPCB.EC0.FANS        |  8-bit | 100
++ 81X1           | Flex 5             | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
++ 83KF           | XiaoXinPro 13ARE   | 0x06/0xFE | \_SB.PCI0.LPC0.EC0.FANS/FA2S   |  8-bit | 100
++ 82KU           | IdeaPad 3 15ALC6   | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
++ 82KU           | IdeaPad 3 15ALC6 ub| 0x06      | \_SB.PCI0.LPC0.EC0.FANS/FA2S   |  8-bit | 100
++ 83RU           | Legion Pro 7 16    | 0x03/0x06 | \_SB.PCI0.LPC0.EC0.FANS/FA2S   |  8-bit | 100
++ 83KF           | Yoga Pro 7 14IAH   | 0x06      | \_SB.PC00.LPCB.EC0.FANS        |  8-bit | 100
++ 83BS           | Yoga 7 16ARP8      | 0x03/0x06 | \_SB.PCI0.LPC0.EC0.FANS/FA2S   |  8-bit | 100
++ *Legacy*       | Pre-2020 Models    | 0x06      | \_SB.PCI0.LPC.EC.FAN0          |  8-bit | 100
+  ----------------------------------------------------------------------------------------------------
+ 
+ METHODOLOGY & IDENTIFICATION:
+@@ -159,6 +158,7 @@ Contributors & DSDT Providers:
+ - **Sarbajit Sarkar** (Lenovo LOQ 15IAX9)
+ - **HinataKato** (XiaoXin Pro 13ARE 2020 - 83KF)
+ - **PenPenIsGod** (IdeaPad 3 15ALC6 - 82KU & Legion Pro 7 16AFR10H - 83RU)
++- **wizard-28** (IdeaPad 3 15ALC6 Ub - 82KU)
+ - **unlockxiaom** (Legion Pro 7 16AFR10H - 83RU, Yoga Pro 7 14IAH10 - 83KF, ThinkCentre M80q)
+ - **Phani Pavan K** (Yoga Pro 7 14IAH10 - 83KF)
+ - **Splarkszter** (Yoga 7 16ARP8 - 83BS)
+diff --git a/drivers/hwmon/yogafan.c b/drivers/hwmon/yogafan.c
+index 413ddc721..2ce358c74 100644
+--- a/drivers/hwmon/yogafan.c
++++ b/drivers/hwmon/yogafan.c
+@@ -1,6 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+-/*
+- * yoga_fan.c - Lenovo Yoga/Legion Fan Hardware Monitoring Driver
++/**
++ * yogafan.c - Lenovo Yoga/Legion Fan Hardware Monitoring Driver
+  *
+  * Provides fan speed monitoring for Lenovo Yoga, Legion, and IdeaPad
+  * laptops by interfacing with the Embedded Controller (EC) via ACPI.
+@@ -53,6 +53,17 @@ struct yoga_fan_data {
+ };
+ 
+ /* Specific configurations mapped via DMI */
++static const struct yogafan_config yoga_740_15iml_cfg = {
++	.multiplier = 100,
++	.fan_count = 1,
++	.paths = { "\\_SB.PCI0.LPCB.EC0.FANS", NULL }
++};
++
++static const struct yogafan_config ideapad_3_15alc6_82ku_cfg = {
++	.multiplier = 100,
++	.fan_count = 2,
++	.paths = { "\\_SB.PCI0.LPC0.EC0.FANS", "\\_SB.PCI0.LPC0.EC0.FA2S" },
++};
+ 
+ static const struct yogafan_config yoga_8bit_fans_cfg = {
+ 	.multiplier = 100,
+@@ -90,17 +101,6 @@ static const struct yogafan_config yoga_pro_7_14iah10_cfg = {
+ 	.paths = { "\\_SB.PC00.LPCB.EC0.FANS", NULL }
+ };
+ 
+-/*
+- * Lenovo Yoga Pro 9 16IMH9 (83DN) uses the PC00 namespace and has two
+- * 8-bit fan tachometer fields.
+- */
+-static const struct yogafan_config yoga_pro_83dn_cfg = {
+-	.multiplier = 100,
+-	.fan_count = 2,
+-	.paths = { "\\_SB.PC00.LPCB.EC0.FANS",
+-		   "\\_SB.PC00.LPCB.EC0.FA2S" }
+-};
+-
+ static void apply_rllag_filter(struct yoga_fan_data *data, int idx, long raw_rpm)
+ {
+ 	ktime_t now = ktime_get_boottime();
+@@ -200,6 +200,30 @@ static const struct hwmon_chip_info yoga_fan_chip_info = {
+ };
+ 
+ static const struct dmi_system_id yogafan_quirks[] = {
++	{
++		.ident = "Lenovo Yoga 740-15IML",
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
++			DMI_MATCH(DMI_PRODUCT_FAMILY, "Yoga 740-15IML"),
++		},
++		.driver_data = (void *)&yoga_740_15iml_cfg,
++	},
++	{
++		.ident = "Lenovo IdeaPad 3 15ALC6 Ub",
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
++			DMI_MATCH(DMI_PRODUCT_FAMILY, "IdeaPad 3 15ALC6 Ub"),
++		},
++		.driver_data = (void *)&ideapad_3_15alc6_82ku_cfg,
++	},
++	{
++		.ident = "Yoga 14cACN 2021",
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
++			DMI_MATCH(DMI_PRODUCT_FAMILY, "Yoga 14cACN 2021"),
++		},
++		.driver_data = (void *)&yoga_8bit_fans_cfg,
++	},
+ 	{
+ 		.ident = "Lenovo LOQ 15IAX9",
+ 		.matches = {
+@@ -248,14 +272,6 @@ static const struct dmi_system_id yogafan_quirks[] = {
+ 		},
+ 		.driver_data = (void *)&xiaoxin_8bit_dual_cfg,
+ 	},
+-	{
+-		.ident = "Lenovo Yoga Pro 9 16IMH9 (83DN)",
+-		.matches = {
+-			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
+-			DMI_MATCH(DMI_PRODUCT_NAME, "83DN"),
+-		},
+-		.driver_data = (void *)&yoga_pro_83dn_cfg,
+-	},
+ 	{
+ 		.ident = "Lenovo Yoga",
+ 		.matches = {
+-- 
+2.55.0
+

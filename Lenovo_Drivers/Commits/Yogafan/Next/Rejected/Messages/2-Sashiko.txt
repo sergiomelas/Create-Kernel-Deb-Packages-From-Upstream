@@ -1,0 +1,182 @@
+All of lore.kernel.org
+ help / color / mirror / Atom feed
+From: sashiko-bot@kernel.org
+To: "Sergio Melas" <sergiomelas@gmail.com>
+Cc: linux-hwmon@vger.kernel.org
+Subject: Re: [PATCH] hwmon: (yogafan) Add support for new Lenovo models
+Date: Sun, 06 Sep 2026 02:17:59 +0000	[thread overview]
+Message-ID: <20260906021759.6E91B1F00A3A@smtp.kernel.org> (raw)
+In-Reply-To: <20260906021023.766992-1-sergiomelas@gmail.com>
+
+Thank you for your contribution! Sashiko AI review found 3 potential issue(s) to consider:
+- [High] Regression / Missing Device Support for Lenovo Yoga Pro 9 16IMH9 (83DN)
+- [Medium] Casing mismatch for IdeaPad 3 15ALC6 Ub DMI string
+- [Low] Redundant DMI quirk for Yoga 14cACN 2021
+--
+
+commit 401f8cbc6c1564d4dde7841a9984dbdade60d7ca
+Author: Sergio Melas <sergiomelas@gmail.com>
+
+hwmon: (yogafan) Add support for new Lenovo models
+
+This commit adds DMI quirk entries and maps ACPI paths and configurations
+for several new Lenovo laptop models. It also shifts towards matching by
+DMI product family instead of product name to distinguish internal fan
+layouts.
+
+> diff --git a/Documentation/hwmon/yogafan.rst b/Documentation/hwmon/yogafan.rst
+> index 9ff5db5dc08ce..a7e628bc3e44f 100644
+> --- a/Documentation/hwmon/yogafan.rst
+> +++ b/Documentation/hwmon/yogafan.rst
+> @@ -85,27 +85,26 @@ immediately to ensure the user knows the fan has stopped.
+>
+>  ::
+>
+> - MODEL (DMI PN) | FAMILY / SERIES  | EC OFFSET | FULL ACPI OBJECT PATH          | WIDTH  | MULTiplier
+> + MODEL (DMI PN) | FAMILY / SERIES    | EC OFFSET | FULL ACPI OBJECT PATH          | WIDTH  | MULTiplier
+>   ----------------------------------------------------------------------------------------------------
+> - 82N7           | Yoga 14cACN      | 0x06      | \_SB.PCI0.LPC0.EC0.FANS        |  8-bit | 100
+> - 80V2 / 81C3    | Yoga 710/720     | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
+> - 83E2           | Yoga Pro 7       | 0xFE      | \_SB.PCI0.LPC0.EC0.FANS        |  8-bit | 100
+> - 83DN           | Yoga Pro 9 16IMH9 | 0x06/0xFE | \_SB.PC00.LPCB.EC0.FANS/FA2S  |  8-bit | 100
+> + 82N7           | Yoga 14cACN        | 0x06      | \_SB.PCI0.LPC0.EC0.FANS        |  8-bit | 100
+> + 80V2 / 81C3    | Yoga 710/720       | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
+> + 83E2 / 83DN    | Yoga Pro 7/9       | 0xFE      | \_SB.PCI0.LPC0.EC0.FANS        |  8-bit | 100
+
+[Severity: High]
+Does 83DN actually share this ACPI path and single-fan layout with 83E2? The
+previous code and documentation indicated it had two fans and used the
+\_SB.PC00.LPCB namespace.
+
+[ ... ]
+
+> - 82KU           | IdeaPad 3 15ALC6 | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
+> + 82KU           | IdeaPad 3 15ALC6   | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
+> + 82KU           | IdeaPad 3 15ALC6 ub| 0x06      | \_SB.PCI0.LPC0.EC0.FANS/FA2S   |  8-bit | 100
+
+[ ... ]
+
+> diff --git a/drivers/hwmon/yogafan.c b/drivers/hwmon/yogafan.c
+> index 413ddc721a113..2ce358c74410d 100644
+> --- a/drivers/hwmon/yogafan.c
+> +++ b/drivers/hwmon/yogafan.c
+
+[ ... ]
+
+> @@ -200,6 +200,30 @@ static const struct hwmon_chip_info yoga_fan_chip_info = {
+>  };
+>
+>  static const struct dmi_system_id yogafan_quirks[] = {
+> +	{
+> +		.ident = "Lenovo Yoga 740-15IML",
+> +		.matches = {
+> +			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
+> +			DMI_MATCH(DMI_PRODUCT_FAMILY, "Yoga 740-15IML"),
+> +		},
+> +		.driver_data = (void *)&yoga_740_15iml_cfg,
+> +	},
+> +	{
+> +		.ident = "Lenovo IdeaPad 3 15ALC6 Ub",
+> +		.matches = {
+> +			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
+> +			DMI_MATCH(DMI_PRODUCT_FAMILY, "IdeaPad 3 15ALC6 Ub"),
+> +		},
+
+[Severity: Medium]
+Is the DMI string casing correct here? The code checks for "Ub" (uppercase U),
+but the documentation table added in this same commit lists it as "ub"
+(lowercase u). Since DMI_MATCH uses a case-sensitive match, if the hardware
+actually uses the lowercase version, this quirk will silently fail to match
+and the device will incorrectly fall back to the generic 1-fan profile.
+
+> +		.driver_data = (void *)&ideapad_3_15alc6_82ku_cfg,
+> +	},
+> +	{
+> +		.ident = "Yoga 14cACN 2021",
+> +		.matches = {
+> +			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
+> +			DMI_MATCH(DMI_PRODUCT_FAMILY, "Yoga 14cACN 2021"),
+> +		},
+> +		.driver_data = (void *)&yoga_8bit_fans_cfg,
+> +	},
+
+[Severity: Low]
+Is this specific quirk necessary? The generic "Lenovo Yoga" fallback further
+down the list in yogafan_quirks[] already maps to yoga_8bit_fans_cfg. Since
+"Yoga" is a substring of this product family, wouldn't it achieve the exact
+same behavior without this extra entry?
+
+>  	{
+>  		.ident = "Lenovo LOQ 15IAX9",
+>  		.matches = {
+
+[ ... ]
+
+> @@ -248,14 +272,6 @@ static const struct dmi_system_id yogafan_quirks[] = {
+>  		},
+>  		.driver_data = (void *)&xiaoxin_8bit_dual_cfg,
+>  	},
+> -	{
+> -		.ident = "Lenovo Yoga Pro 9 16IMH9 (83DN)",
+> -		.matches = {
+> -			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
+> -			DMI_MATCH(DMI_PRODUCT_NAME, "83DN"),
+> -		},
+> -		.driver_data = (void *)&yoga_pro_83dn_cfg,
+> -	},
+
+[Severity: High]
+Was the removal of the 83DN quirk intentional? By removing this without adding
+a functional equivalent using DMI_PRODUCT_FAMILY, the Yoga Pro 9 16IMH9 (83DN)
+will likely fall back to the generic 'Lenovo Yoga' quirk. That generic quirk
+expects the PCI0.LPC0 namespace and 1 fan, whereas 83DN requires the PC00.LPCB
+namespace and 2 fans. Will this cause a functional regression for this device?
+
+>  	{
+>  		.ident = "Lenovo Yoga",
+>  		.matches = {
+
+--
+Sashiko AI review · https://sashiko.dev/#/patchset/20260906021023.766992-1-sergiomelas@gmail.com?part=1
+next prev parent reply	other threads:[~2026-09-06  2:17 UTC|newest]
+
+Thread overview: 8+ messages / expand[flat|nested]  mbox.gz  Atom feed  top
+2026-09-06  2:10 [PATCH] hwmon: (yogafan) Add support for new Lenovo models Sergio Melas
+2026-09-06  2:17 ` sashiko-bot [this message]
+  -- strict thread matches above, loose matches on Subject: below --
+2026-08-06 13:11 Sergio Melas
+2026-08-06 13:24 ` sashiko-bot
+2026-08-06 15:44   ` Guenter Roeck
+2026-08-06 18:26     ` Sergio Melas
+2026-08-06 19:17       ` Guenter Roeck
+2026-08-06 19:18 ` Guenter Roeck
+Reply instructions:
+
+You may reply publicly to this message via plain-text email
+using any one of the following methods:
+
+* Save the following mbox file, import it into your mail client,
+  and reply-to-all from there: mbox
+
+  Avoid top-posting and favor interleaved quoting:
+  https://en.wikipedia.org/wiki/Posting_style#Interleaved_style
+
+* Reply using the --to, --cc, and --in-reply-to
+  switches of git-send-email(1):
+
+  git send-email \
+    --in-reply-to=20260906021759.6E91B1F00A3A@smtp.kernel.org \
+    --to=sashiko-bot@kernel.org \
+    --cc=linux-hwmon@vger.kernel.org \
+    --cc=sashiko-reviews@lists.linux.dev \
+    --cc=sergiomelas@gmail.com \
+    /path/to/YOUR_REPLY
+
+  https://kernel.org/pub/software/scm/git/docs/git-send-email.html
+
+* If your mail client supports setting the In-Reply-To header
+  via mailto: links, try the mailto: link
+Be sure your reply has a Subject: header at the top and a blank line before the message body.
+This is an external index of several public inboxes,
+see mirroring instructions on how to clone and mirror
+all data and code used by this external index.
