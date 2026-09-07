@@ -1,0 +1,24 @@
+### Driver V12 Refactoring Checklist (Technical Debt & Safety)
+
+#### Category A: Metadata & Cleanliness
+- [x] Remove Version Branding: Delete all references to "V12" or "V11" in comments and documentation. The kernel tree only tracks current state.
+- [x] Fix RST Underlines: Ensure the `====` lines in yogafan.rst match the character count of the title exactly to pass Sphinx build tests.
+- [x] Whitespace Sanitation: Remove double empty lines in Kconfig and trailing spaces at ends of files.
+- [x] Tab/Space Correction: Replace spaces with hard tabs (8-chars) in #define blocks (specifically MIN_TAU_MS).
+
+#### Category B: Module Parameters & Safety
+- [x] Hardcode Physics Constants: Remove `tau_s`, `slew_time_s`, and `stop_threshold_rpm` as module_params. Move these into the yogafan_config struct.
+- [x] Prevent Divide-by-Zero: The probe-time calculation for `internal_max_slew_rpm_s` must not rely on a user-changeable `slew_time_s` to avoid a kernel OOPS.
+- [x] Fix Atomic Logic Bypasses: Ensure threshold values aren't read multiple times from global memory, preventing race conditions if a value changes mid-calculation.
+
+#### Category C: Sysfs Architecture & Collisions
+- [x] Delete Custom Attribute Group: Remove `fan1_raw` and `fan2_raw`. Non-standard attributes are forbidden in sysfs; use debugfs if raw data is mandatory.
+- [x] Resolve Namespace Collisions: Remove the custom `fanX_max` attributes. They collide with the standard `HWMON_F_MAX` attributes you enabled in the core.
+- [x] Implement Attribute Visibility: Fix the logic so that fan2 attributes do not appear on single-fan laptops (Guenter's "Ghost Fan" issue).
+- [x] Fix Stale Data Reads: Ensure that any RPM-related read triggers a fresh ACPI evaluation rather than returning a cached variable that hasn't been updated.
+
+#### Category D: Probe & Logic Improvements
+- [x] Refactor Path Probing Loop: Replace the `continue` logic in probe with Guenter's requested loop: `for (i = 0; i < 2 && cfg->paths[i]; i++)`.
+- [x] Synchronize Quirk Table: Resolve conflicts where the code searches for 2 paths (Yoga 3) but the documentation only lists 1.
+- [x] Remove Redundant Type Casts: Delete `(void *)` from the DMI quirk table entries to clean up the C code.
+- [x] Fix Filter State Corruption: Modify `yoga_fan_read` so that reading a static `_max` value does not trigger the filter and corrupt the `last_sample` timestamp.
