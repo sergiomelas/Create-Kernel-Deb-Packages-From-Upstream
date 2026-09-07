@@ -1,0 +1,70 @@
+hwmon: (yogafan) Expand hardware support and refactor HAL logic
+
+Transition the driver to a Hardware Abstraction Layer (HAL) to manage
+diverse Embedded Controller (EC) behaviors across different hardware
+generations. This allows the RLLag filter to remain physically
+consistent across 15 distinct hardware profiles.
+
+Support is expanded to cover a broad range of Lenovo consumer laptops,
+including Yoga, Legion, LOQ, IdeaPad, and ThinkBook series. Support
+for legacy discrete-step ECs is introduced via linear estimation logic.
+Dynamics (Tau and Slew Rate) for these profiles are derived by scaling
+reference measurements from a Yoga 14cACN based on fan diameter
+(assuming moment of inertia J ∝ d²).
+
+To prevent resource conflicts with the 'lenovo-wmi-other' driver on
+modern gaming models, explicit WMI GUID detection is added to the
+probe sequence. The implementation uses IS_REACHABLE logic to ensure
+compatibility across diverse kernel configurations.
+
+Suggested-by: Rong Zhang <i@rong.moe>
+Link: https://lore.kernel.org/r/b70674d5a2152ed6123966f96acbd2872518a6f1.camel@rong.moe/
+Link: https://lore.kernel.org/r/ae53b7783787975caa973dcde337f20aee9b0b40.camel@rong.moe/
+Assisted-by: Google:Gemini-3-Flash [DSDT/XML-Data-Aggregation & Formatting]
+Signed-off-by: Sergio Melas <sergiomelas@gmail.com>
+---
+v3: Safety hardening and build synchronization
+- Fixed critical array out-of-bounds access in yoga_fan_read() to
+   prevent kernel panics on triple-fan models (Identified by Sashiko review).
+ - Integrated #if IS_REACHABLE(CONFIG_ACPI_WMI) guards and Kconfig
+   optional dependency to fix build errors on non-WMI configurations
+   (Reported-by: kernel test robot, Suggested-by: Rong Zhang).
+ - Integrated path fix for ideapad-laptop.c in documentation following
+   its move to the lenovo/ subdirectory (Reported-by: Ninad Naik).
+ - Removed flawed ACPI fallback logic in the read path to prevent
+   telemetry cross-talk and ensure deterministic data reporting.
+ - Reordered DMI quirk table to prevent generic "ThinkPad" strings
+   from shadowing specific "ThinkPad L" profiles.
+
+v2: Inprovements after feedback
+ - Split patch into two parts for easier review
+ - Enforced system vendor matching (LENOVO) in all DMI quirk entries.
+ - Moved the polling interval check before ACPI calls in yoga_fan_read()
+   to protect the EC from rapid polling spam.
+ - Restored 'static const' qualifiers for hardware configuration
+   profiles to ensure .rodata placement.
+ - Cleaned up redundant logic and transitioned internal comments to
+   English in yoga_fan_probe().
+ - Dropped superlatives and simplified the commit message tone.
+
+v1: Fresh baseline for HAL refactoring.
+ - Integrated 7-section structural reorganization for both the
+   DMI quirk table and the yogafan.rst HAL table to support 400+ models.
+ - Added support for legacy discrete-step EC logic (Nmax > 0).
+ - Integrated documentation markup improvements suggested by Randy Dunlap.
+ - Resolved "phantom fan" issues by implementing deterministic ACPI path
+   discovery that respects the expected fan count for each profile.
+ - Physics Consistency: Modified the RLLag filter to use per-device
+   constants (internal_tau_ms). Time parameters (Tau/Slew) were measured
+   on a reference Yoga 14cACN; parameters for other models are currently
+   estimations derived from fan-size scaling (J ∝ d²).
+ - Mathematical Safety: Implemented safety clamps and used resolved
+   device_max_rpm as a physical basis to prevent potential division-by-zero.
+ - State Protection: yoga_fan_read() now handles static attributes (max)
+   immediately to prevent corruption of the filter timing state.
+ - Implemented WMI GUID detection in the probe sequence for WMI coexistence.
+
+
+History:
+ - Base Driver : Established the core RLLag filter logic and
+   initial support for ~12 modern Yoga/Legion families.

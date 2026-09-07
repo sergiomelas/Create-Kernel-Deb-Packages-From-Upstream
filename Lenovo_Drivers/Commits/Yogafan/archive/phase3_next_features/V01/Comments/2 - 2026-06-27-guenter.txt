@@ -1,0 +1,54 @@
+Guenter Roeck
+5:22 PM (15 minutes ago)
+to sashiko-reviews, me, linux-hwmon
+
+On 6/27/26 01:49, sashiko-bot@kernel.org wrote:
+> Thank you for your contribution! Sashiko AI review found 2 potential issue(s) to consider:
+> - [High] Unprivileged Denial of Service of the RLLag telemetry filter via fast polling (shared state pollution).
+> - [Medium] Silent bypass of WMI Coexistence Guard due to Kconfig mismatch (`IS_REACHABLE` misuse).
+> --
+>
+> commit db32fd276d89299ba906703e55172f8ec3415249
+> Author: Sergio Melas <sergiomelas@gmail.com>
+>
+> hwmon: (yogafan) Add support for Lenovo Yoga/Legion fan monitoring
+>
+> This driver provides fan speed monitoring for Lenovo Yoga, Legion, and
+> IdeaPad laptops by interfacing with the Embedded Controller (EC) via ACPI.
+> It implements a Rate-Limited Lag filter to smooth out low-resolution sampling
+> in the embedded controller.
+>
+
+Your patch is very obviously AI generated, and on top of that you did not
+even look at its output.
+- The patch description does not describe what the patch is actually doing
+- The patch adds lots of unnecessary white-space changes
+- The patch adds unnecessary include files (hwmon-sysfs.h)
+- The patch adds non-standard tags such as "cite_start"
+- Some of the changes are bogus (see Sashiko report)
+- ... ok, I stopped there
+
+I asked Google search: "What is cite_start about ?" and it tells me:
+
+"The cite_start tag is a raw backend processing artifact that Gemini's AI model
+  uses to track the origin of factual statements. When a frontend interface fails
+  to properly render these into clickable hyperlinks or numbers, the raw text
+  leaks into the final output.
+"
+
+Interesting. Then I started a session with Gemini 3.1 Pro and gave it the
+following instructions:
+
+"The patch in 'index.html' modifies a driver in the checked out Linux kernel.
+  Analyze it, drop all white-space changes, split the patch into multiple patches
+  following Linux kernel development guidelines (one logical change per patch),
+  write appropriate patch descriptions, and apply the resulting patches to the
+  checked out Linux kernel.
+"
+
+It splits the patch into 5 separate patches, each with appropriate description.
+It didn't drop cite_start or the unnecessary additional include file (I didn't
+ask it to _review_ the code, after all), but it was a start. I don't know what
+model you are using, but I would suggest to start over and do something similar.
+
+Guenter

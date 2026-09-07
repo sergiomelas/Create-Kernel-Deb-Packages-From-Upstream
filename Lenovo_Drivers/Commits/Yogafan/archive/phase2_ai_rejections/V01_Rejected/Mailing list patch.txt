@@ -1,0 +1,12 @@
+git send-email \
+  --to="Guenter Roeck <linux@roeck-us.net>" \
+  --to="Jean Delvare <jdelvare@suse.com>" \
+  --to="Rong Zhang <i@rong.moe>" \
+  --cc="linux-hwmon@vger.kernel.org" \
+  --cc="platform-driver-x86@vger.kernel.org" \
+  --cc="linux-kernel@vger.kernel.org" \
+  --cc="Armin Wolf <W_Armin@gmx.de>" \
+  --cc="Derek J. Clark <derekjohn.clark@gmail.com>" \
+  0001-hwmon-yogafan-Extend-support-to-more-Lenovo-consumer-V1-next-diff.patch
+
+  Dalla directory del kernel diff patch builder

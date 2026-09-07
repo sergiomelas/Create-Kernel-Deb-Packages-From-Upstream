@@ -1,0 +1,144 @@
+All of lore.kernel.org
+ help / color / mirror / Atom feed
+From: Rong Zhang <i@rong.moe>
+To: Guenter Roeck <linux@roeck-us.net>,
+	kernel test robot <lkp@intel.com>,
+	 Sergio Melas <sergiomelas@gmail.com>,
+	Jean Delvare <jdelvare@suse.com>
+Cc: llvm@lists.linux.dev, oe-kbuild-all@lists.linux.dev,
+	 linux-hwmon@vger.kernel.org,
+	platform-driver-x86@vger.kernel.org,
+	 linux-kernel@vger.kernel.org, Armin Wolf <W_Armin@gmx.de>,
+	"Derek J . Clark"	 <derekjohn.clark@gmail.com>
+Subject: Re: [PATCH v1] hwmon: (yogafan) Massive hardware expansion and structural refactoring
+Date: Sat, 18 Apr 2026 23:14:33 +0800	[thread overview]
+Message-ID: <b70674d5a2152ed6123966f96acbd2872518a6f1.camel@rong.moe> (raw)
+In-Reply-To: <27b467c7-7ca0-4198-b4ea-efb38f2ac787@roeck-us.net>
+
+Hi Guenter,
+
+On Sat, 2026-04-18 at 06:49 -0700, Guenter Roeck wrote:
+> On 4/18/26 04:23, Rong Zhang wrote:
+> > Hi Sergio,
+> >
+> > On Sat, 2026-04-18 at 18:31 +0800, Rong Zhang wrote:
+> > > Hi Sergio,
+> > >
+> > > On Sat, 2026-04-18 at 05:37 +0800, kernel test robot wrote:
+> > > > Hi Sergio,
+> > > >
+> > > > kernel test robot noticed the following build errors:
+> > > >
+> > > > [auto build test ERROR on groeck-staging/hwmon-next]
+> > > > [also build test ERROR on linus/master next-20260416]
+> > > > [cannot apply to v7.0]
+> > > > [If your patch is applied to the wrong git tree, kindly drop us a note.
+> > > > And when submitting patch, we suggest to use '--base' as documented in
+> > > > https://git-scm.com/docs/git-format-patch#_base_tree_information]
+> > > >
+> > > > url:    https://github.com/intel-lab-lkp/linux/commits/Sergio-Melas/hwmon-yogafan-Massive-hardware-expansion-and-structural-refactoring/20260417-063319
+> > > > base:   https://git.kernel.org/pub/scm/linux/kernel/git/groeck/linux-staging.git hwmon-next
+> > > > patch link:    https://lore.kernel.org/r/20260413060931.31091-2-sergiomelas%40gmail.com
+> > > > patch subject: [PATCH v1] hwmon: (yogafan) Massive hardware expansion and structural refactoring
+> > > > config: loongarch-allmodconfig (https://download.01.org/0day-ci/archive/20260418/202604180539.EuswNnjG-lkp@intel.com/config)
+> > > > compiler: clang version 19.1.7 (https://github.com/llvm/llvm-project cd708029e0b2869e80abe31ddb175f7c35361f90)
+> > > > reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20260418/202604180539.EuswNnjG-lkp@intel.com/reproduce)
+> > > >
+> > > > If you fix the issue in a separate patch/commit (i.e. not just a new version of
+> > > > the same patch/commit), kindly add following tags
+> > > > > Reported-by: kernel test robot <lkp@intel.com>
+> > > > > Closes: https://lore.kernel.org/oe-kbuild-all/202604180539.EuswNnjG-lkp@intel.com/
+> > > >
+> > > > All errors (new ones prefixed by >>):
+> > > >
+> > > > > > drivers/hwmon/yogafan.c:712:6: error: call to undeclared function 'wmi_has_guid'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+> > > >       712 |         if (wmi_has_guid(LENOVO_WMI_OTHER_MODE_GUID) ||
+> > > >           |             ^
+> > > >     1 error generated.
+> > >
+> > > Hmm, that's a bit troublesome. Usually we should have been able to
+> > > declare `depends on ACPI_WMI if ACPI_WMI' (new syntax since v7.0) or
+> > > `depends on ACPI_WMI || !ACPI_WMI' as an optional dependency to prevent
+> > > such an issue, but there is no static inline stubs for !ACPI_WMI...
+> > >
+> > > I'd suggest declaring `select ACPI_WMI if ACPI && X86' in Kconfig as
+> > > some drm drivers do, at least for the time being.
+> >
+> > Of course you'll still need to guard the wmi_has_guid() checks behind
+> > `#ifdef CONFIG_ACPI_WMI'. Just forgot to mention that.
+> >
+> > Hmm, in this way `depends on ACPI_WMI if ACPI_WMI' should also be OK...
+>
+> I don't know is this is a misspelling, but `depends on ACPI_WMI if ACPI_WMI'
+> doesn't make any sense.
+
+This is the new syntax for optional dependencies since commit
+76df6815dab7 ("kconfig: Support conditional deps using "depends on X if
+Y""), which is equivalent to the old-fashioned `depends on ACPI_WMI ||
+!ACPI_WMI'.
+
+It's needed to prevent the combination of CONFIG_ACPI_WMI=m +
+CONFIG_SENSORS_YOGAFAN=y, which leads to linkage error. Considering that
+yogafan doesn't really need the WMI driver core except for
+wmi_has_guid(), it also makes yogafan possible to build with
+CONFIG_ACPI_WMI=n, which implies CONFIG_LENOVO_WMI_TUNING=n (the config
+entry for lenovo-wmi-other). No double reporting is possible in this
+case and hence the GUID check is not needed at all when
+CONFIG_ACPI_WMI=n.
+
+Thanks,
+Rong
+
+>
+> Guenter
+next prev parent reply	other threads:[~2026-04-18 15:19 UTC|newest]
+
+Thread overview: 10+ messages / expand[flat|nested]  mbox.gz  Atom feed  top
+2026-04-13  6:09 [PATCH v1] hwmon: (yogafan) Massive hardware expansion and structural refactoring Sergio Melas
+2026-04-13  6:38 ` sashiko-bot
+2026-04-13 13:51   ` Guenter Roeck
+2026-04-13 13:55     ` Guenter Roeck
+2026-04-17 21:37 ` kernel test robot
+2026-04-18 10:31   ` Rong Zhang
+2026-04-18 11:23     ` Rong Zhang
+2026-04-18 13:49       ` Guenter Roeck
+2026-04-18 15:14         ` Rong Zhang [this message]
+2026-04-18 15:49           ` Guenter Roeck
+Reply instructions:
+
+You may reply publicly to this message via plain-text email
+using any one of the following methods:
+
+* Save the following mbox file, import it into your mail client,
+  and reply-to-all from there: mbox
+
+  Avoid top-posting and favor interleaved quoting:
+  https://en.wikipedia.org/wiki/Posting_style#Interleaved_style
+
+* Reply using the --to, --cc, and --in-reply-to
+  switches of git-send-email(1):
+
+  git send-email \
+    --in-reply-to=b70674d5a2152ed6123966f96acbd2872518a6f1.camel@rong.moe \
+    --to=i@rong.moe \
+    --cc=W_Armin@gmx.de \
+    --cc=derekjohn.clark@gmail.com \
+    --cc=jdelvare@suse.com \
+    --cc=linux-hwmon@vger.kernel.org \
+    --cc=linux-kernel@vger.kernel.org \
+    --cc=linux@roeck-us.net \
+    --cc=lkp@intel.com \
+    --cc=llvm@lists.linux.dev \
+    --cc=oe-kbuild-all@lists.linux.dev \
+    --cc=platform-driver-x86@vger.kernel.org \
+    --cc=sergiomelas@gmail.com \
+    /path/to/YOUR_REPLY
+
+  https://kernel.org/pub/software/scm/git/docs/git-send-email.html
+
+* If your mail client supports setting the In-Reply-To header
+  via mailto: links, try the mailto: link
+Be sure your reply has a Subject: header at the top and a blank line before the message body.
+This is an external index of several public inboxes,
+see mirroring instructions on how to clone and mirror
+all data and code used by this external index.

@@ -1,0 +1,62 @@
+================================================================================
+UPSTREAM KERNEL SUBMISSION ROADMAP FOR YOGAFAN DRIVER
+================================================================================
+
+[PATCH 1/5] hwmon: (yogafan) Introduce early userspace read guard rate-limiting
+--------------------------------------------------------------------------------
+- TARGET LOCATION: yoga_fan_read()
+- DESCRIPTION: Moves the MIN_SAMPLING check to the absolute top of the sysfs
+  read function, right after validating the attribute type. If the user space
+  polls faster than 100ms, the guard drops the request early, copies the
+  cached value from data->filtered_val to userspace, and exits with 0.
+- RATIONALE: Resolves the severe Denial of Service (DoS) bug and prevents
+  the driver from executing heavy ACPI/EC method queries during rapid polling
+  blasts. It perfectly guarantees that internal state timers do not stall.
+
+
+[PATCH 2/5] hwmon: (yogafan) Fix ACPI WMI coexistence guard macro compliance
+--------------------------------------------------------------------------------
+- TARGET LOCATION: yoga_fan_probe() / Global GUID Includes
+- DESCRIPTION: Replaces the non-standard #if IS_ENABLED(CONFIG_ACPI_WMI) check
+  with proper kernel API macros (such as IS_REACHABLE or runtime validation).
+  It cleanly verifies if the Lenovo WMI thermal/fan management GUIDs
+  (LENOVO_WMI_OTHER_MODE_GUID, etc.) are owned by an active WMI subsystem block.
+- RATIONALE: Standardizes cross-subsystem hardware discovery. It safely yields
+  control to the official Lenovo WMI driver when present, eliminating dual-reporting
+  or race conditions before expanding hardware configurations.
+
+
+[PATCH 3/5] hwmon: (yogafan) Modernize HWMON channel descriptor declaration
+--------------------------------------------------------------------------------
+- TARGET LOCATION: yoga_fan_info[] / yoga_fan_chip_info
+- DESCRIPTION: Cleans up the raw, repeating static array declaration for the
+  fan channels. Replaces unrolled element sequences with modern, compliant
+  HWMON_CHANNEL_INFO(fan, ...) macro descriptors.
+- RATIONALE: Aligns the driver structure with clean upstream coding rules. It
+  removes redundant boilerplate code and makes the chip channel definitions
+  highly readable and auditable for the maintainers.
+
+
+[PATCH 4/5] hwmon: (yogafan) Implement multi-profile HAL and dynamic physics math
+--------------------------------------------------------------------------------
+- TARGET LOCATION: struct yoga_fan_data, struct yogafan_config, apply_rllag_filter()
+- DESCRIPTION: Expands structural fields to handle dynamic calculation targets
+  (introducing n_max, r_max, tau_ms, slew_time_s, and stop_threshold). It rewrites
+  the internals of apply_rllag_filter() to utilize these per-device variables
+  instead of hardcoded global macros, running full fixed-point bilinear filtering
+  and dynamic slew calculations.
+- RATIONALE: Establishes the core Hardware Abstraction Layer (HAL). It transforms
+  the filtering algorithm from a single-model baseline into a flexible, data-driven
+  physics engine capable of supporting diverse fan diameters and inertias.
+
+
+[PATCH 5/5] hwmon: (yogafan) Expand DMI quirk table to support full Lenovo fleet
+--------------------------------------------------------------------------------
+- TARGET LOCATION: yogafan_quirks[] DMI matching array
+- DESCRIPTION: Massively scales out the driver’s device-matching matrix. It populates
+  the quirk table with specialized string matches for the entire Lenovo line—including
+  Yoga Slim, Legion 5/7/9i, LOQ, ThinkPad, ThinkBook, and IdeaPad series—binding each
+  product safely to its verified continuous or discrete HAL inertia profile.
+- RATIONALE: Completes the driver feature map by safely deploying the mature HAL engine
+  across all known physical hardware variants without risking regressions.
+================================================================================

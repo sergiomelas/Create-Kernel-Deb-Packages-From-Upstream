@@ -1,0 +1,246 @@
+All of lore.kernel.org
+ help / color / mirror / Atom feed
+From: Rong Zhang <i@rong.moe>
+To: kernel test robot <lkp@intel.com>,
+	Sergio Melas <sergiomelas@gmail.com>,
+	 Guenter Roeck <linux@roeck-us.net>,
+	Jean Delvare <jdelvare@suse.com>
+Cc: llvm@lists.linux.dev, oe-kbuild-all@lists.linux.dev,
+	 linux-hwmon@vger.kernel.org,
+	platform-driver-x86@vger.kernel.org,
+	 linux-kernel@vger.kernel.org, Armin Wolf <W_Armin@gmx.de>,
+	"Derek J . Clark"	 <derekjohn.clark@gmail.com>
+Subject: Re: [PATCH v1] hwmon: (yogafan) Massive hardware expansion and structural refactoring
+Date: Sat, 18 Apr 2026 19:23:54 +0800	[thread overview]
+Message-ID: <fed0feb4770f7fab8d4336eb349d8703839e8ce4.camel@rong.moe> (raw)
+In-Reply-To: <b876cbcce7763041d93f9cad28b8aa4cac0a001a.camel@rong.moe>
+
+Hi Sergio,
+
+On Sat, 2026-04-18 at 18:31 +0800, Rong Zhang wrote:
+> Hi Sergio,
+>
+> On Sat, 2026-04-18 at 05:37 +0800, kernel test robot wrote:
+> > Hi Sergio,
+> >
+> > kernel test robot noticed the following build errors:
+> >
+> > [auto build test ERROR on groeck-staging/hwmon-next]
+> > [also build test ERROR on linus/master next-20260416]
+> > [cannot apply to v7.0]
+> > [If your patch is applied to the wrong git tree, kindly drop us a note.
+> > And when submitting patch, we suggest to use '--base' as documented in
+> > https://git-scm.com/docs/git-format-patch#_base_tree_information]
+> >
+> > url:    https://github.com/intel-lab-lkp/linux/commits/Sergio-Melas/hwmon-yogafan-Massive-hardware-expansion-and-structural-refactoring/20260417-063319
+> > base:   https://git.kernel.org/pub/scm/linux/kernel/git/groeck/linux-staging.git hwmon-next
+> > patch link:    https://lore.kernel.org/r/20260413060931.31091-2-sergiomelas%40gmail.com
+> > patch subject: [PATCH v1] hwmon: (yogafan) Massive hardware expansion and structural refactoring
+> > config: loongarch-allmodconfig (https://download.01.org/0day-ci/archive/20260418/202604180539.EuswNnjG-lkp@intel.com/config)
+> > compiler: clang version 19.1.7 (https://github.com/llvm/llvm-project cd708029e0b2869e80abe31ddb175f7c35361f90)
+> > reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20260418/202604180539.EuswNnjG-lkp@intel.com/reproduce)
+> >
+> > If you fix the issue in a separate patch/commit (i.e. not just a new version of
+> > the same patch/commit), kindly add following tags
+> > > Reported-by: kernel test robot <lkp@intel.com>
+> > > Closes: https://lore.kernel.org/oe-kbuild-all/202604180539.EuswNnjG-lkp@intel.com/
+> >
+> > All errors (new ones prefixed by >>):
+> >
+> > > > drivers/hwmon/yogafan.c:712:6: error: call to undeclared function 'wmi_has_guid'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+> >      712 |         if (wmi_has_guid(LENOVO_WMI_OTHER_MODE_GUID) ||
+> >          |             ^
+> >    1 error generated.
+>
+> Hmm, that's a bit troublesome. Usually we should have been able to
+> declare `depends on ACPI_WMI if ACPI_WMI' (new syntax since v7.0) or
+> `depends on ACPI_WMI || !ACPI_WMI' as an optional dependency to prevent
+> such an issue, but there is no static inline stubs for !ACPI_WMI...
+>
+> I'd suggest declaring `select ACPI_WMI if ACPI && X86' in Kconfig as
+> some drm drivers do, at least for the time being.
+
+Of course you'll still need to guard the wmi_has_guid() checks behind
+`#ifdef CONFIG_ACPI_WMI'. Just forgot to mention that.
+
+Hmm, in this way `depends on ACPI_WMI if ACPI_WMI' should also be OK...
+
+Thanks,
+Rong
+
+>
+> Thanks,
+> Rong
+>
+> >
+> >
+> > vim +/wmi_has_guid +712 drivers/hwmon/yogafan.c
+> >
+> >    697
+> >    698	static int yoga_fan_probe(struct platform_device *pdev)
+> >    699	{
+> >    700		const struct dmi_system_id *dmi_id;
+> >    701		const struct yogafan_config *cfg;
+> >    702		struct yoga_fan_data *data;
+> >    703		struct hwmon_chip_info *chip_info;
+> >    704		struct hwmon_channel_info *info;
+> >    705		u32 *fan_config;
+> >    706		acpi_status status;
+> >    707		int i;
+> >    708		const struct hwmon_channel_info **chip_info_array;
+> >    709
+> >    710		/* Check for WMI interfaces that handle fan/thermal management. */
+> >    711		/*  If present, we yield to the WMI driver to prevent double-reporting. */
+> >  > 712		if (wmi_has_guid(LENOVO_WMI_OTHER_MODE_GUID) ||
+> >    713		    wmi_has_guid(LENOVO_CAPABILITY_DATA_00_GUID) ||
+> >    714		    wmi_has_guid(LENOVO_WMI_FAN_GUID)) {
+> >    715			dev_info(&pdev->dev, "Lenovo WMI management interface detected; yielding to WMI driver\n");
+> >    716			return -ENODEV;
+> >    717		}
+> >    718
+> >    719		dmi_id = dmi_first_match(yogafan_quirks);
+> >    720		if (!dmi_id)
+> >    721			return -ENODEV;
+> >    722
+> >    723		cfg = dmi_id->driver_data;
+> >    724		data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
+> >    725		if (!data)
+> >    726			return -ENOMEM;
+> >    727
+> >    728		/* * 1. Hardware Calibration & Inertia Scaling (Note 3):
+> >    729		 * Dynamic parameters (TAU and SLEW) are calibrated relative to fan diameter
+> >    730		 * based on the moment of inertia relationship (J ∝ d²).
+> >    731		 */
+> >    732		data->config = cfg;
+> >    733		data->device_max_rpm = cfg->r_max ?: 5000;
+> >    734		data->internal_tau_ms = cfg->tau_ms ?: 1000; /* Robustness: Prevent zero-division */
+> >    735
+> >    736		/* Calculate Slew Rate based on time-to-max-RPM physics */
+> >    737		data->internal_max_slew_rpm_s = data->device_max_rpm / (cfg->slew_time_s ?: 1);
+> >    738
+> >    739		/* * Log physical parameters for safety traceability (IEC 61508):
+> >    740		 * Provides a deterministic baseline for the RLLag filter verification.
+> >    741		 */
+> >    742		dev_info(&pdev->dev, "Identified hardware: %s\n", dmi_id->ident);
+> >    743		dev_info(&pdev->dev, "HAL Profile: [Tau: %ums, Slew: %u RPM/s, Max: %u RPM]\n",
+> >    744			 data->internal_tau_ms, data->internal_max_slew_rpm_s, data->device_max_rpm);
+> >    745
+> >    746		/* * 2. Deterministic Multi-Path Discovery:
+> >    747		 * We iterate through the available paths to find physical handles.
+> >    748		 * This loop tests variations until data->fan_count matches the
+> >    749		 * cfg->fan_count expected for this model profile.
+> >    750		 */
+> >    751		for (i = 0; i < MAX_FANS && data->fan_count < cfg->fan_count; i++) {
+> >    752			acpi_handle handle;
+> >    753
+> >    754			/* Integrity check: End of defined paths in the quirk table */
+> >    755			if (!cfg->paths[i])
+> >    756				break;
+> >    757
+> >    758			status = acpi_get_handle(NULL, cfg->paths[i], &handle);
+> >    759			if (ACPI_SUCCESS(status)) {
+> >    760				data->active_handles[data->fan_count] = handle;
+> >    761				data->fan_count++;
+> >    762			} else {
+> >    763				/* Log variation failure for troubleshooting */
+> >    764				dev_dbg(&pdev->dev, "Fan path variation %s not found\n", cfg->paths[i]);
+> >    765			}
+> >    766		}
+> >    767
+> >    768		/* Integrity Check: Fail probe if no fans were successfully registered */
+> >    769		if (data->fan_count == 0) {
+> >    770			dev_err(&pdev->dev, "Hardware identification failed: No fans found\n");
+> >    771			return -ENODEV;
+> >    772		}
+> >    773
+> >    774		/* * 3. HWMON Configuration:
+> >    775		 * Dynamically build the HWMON channel configuration based on the
+> >    776		 * number of fans actually discovered. We allocate one extra slot
+> >    777		 * to serve as a null terminator for the HWMON core.
+> >    778		 */
+> >    779		fan_config = devm_kcalloc(&pdev->dev, data->fan_count + 1, sizeof(u32), GFP_KERNEL);
+> >    780		if (!fan_config)
+> >    781			return -ENOMEM;
+> >    782
+> >    783		for (i = 0; i < data->fan_count; i++)
+> >    784			fan_config[i] = HWMON_F_INPUT | HWMON_F_MAX;
+> >    785
+> >    786		info = devm_kzalloc(&pdev->dev, sizeof(*info), GFP_KERNEL);
+> >    787		if (!info)
+> >    788			return -ENOMEM;
+> >    789
+> >    790		info->type = hwmon_fan;
+> >    791		info->config = fan_config;
+> >    792
+> >    793		/* 4. Wrap it in chip_info for registration */
+> >    794		chip_info = devm_kzalloc(&pdev->dev, sizeof(*chip_info), GFP_KERNEL);
+> >    795		if (!chip_info)
+> >    796			return -ENOMEM;
+> >    797
+> >    798		chip_info->ops = &yoga_fan_hwmon_ops;
+> >    799
+> >    800		chip_info_array = devm_kcalloc(&pdev->dev, 2, sizeof(*chip_info_array), GFP_KERNEL);
+> >    801		if (!chip_info_array)
+> >    802			return -ENOMEM;
+> >    803
+> >    804		chip_info_array[0] = info;
+> >    805		chip_info_array[1] = NULL; /* Null terminated */
+> >    806
+> >    807		chip_info->info = chip_info_array;
+> >    808
+> >    809		/* 5. Finalize registration with the accurate hardware description */
+> >    810		return PTR_ERR_OR_ZERO(devm_hwmon_device_register_with_info(&pdev->dev,
+> >    811					DRVNAME, data, chip_info, NULL));
+> >    812	}
+> >    813
+next prev parent reply	other threads:[~2026-04-18 11:29 UTC|newest]
+
+Thread overview: 10+ messages / expand[flat|nested]  mbox.gz  Atom feed  top
+2026-04-13  6:09 [PATCH v1] hwmon: (yogafan) Massive hardware expansion and structural refactoring Sergio Melas
+2026-04-13  6:38 ` sashiko-bot
+2026-04-13 13:51   ` Guenter Roeck
+2026-04-13 13:55     ` Guenter Roeck
+2026-04-17 21:37 ` kernel test robot
+2026-04-18 10:31   ` Rong Zhang
+2026-04-18 11:23     ` Rong Zhang [this message]
+2026-04-18 13:49       ` Guenter Roeck
+2026-04-18 15:14         ` Rong Zhang
+2026-04-18 15:49           ` Guenter Roeck
+Reply instructions:
+
+You may reply publicly to this message via plain-text email
+using any one of the following methods:
+
+* Save the following mbox file, import it into your mail client,
+  and reply-to-all from there: mbox
+
+  Avoid top-posting and favor interleaved quoting:
+  https://en.wikipedia.org/wiki/Posting_style#Interleaved_style
+
+* Reply using the --to, --cc, and --in-reply-to
+  switches of git-send-email(1):
+
+  git send-email \
+    --in-reply-to=fed0feb4770f7fab8d4336eb349d8703839e8ce4.camel@rong.moe \
+    --to=i@rong.moe \
+    --cc=W_Armin@gmx.de \
+    --cc=derekjohn.clark@gmail.com \
+    --cc=jdelvare@suse.com \
+    --cc=linux-hwmon@vger.kernel.org \
+    --cc=linux-kernel@vger.kernel.org \
+    --cc=linux@roeck-us.net \
+    --cc=lkp@intel.com \
+    --cc=llvm@lists.linux.dev \
+    --cc=oe-kbuild-all@lists.linux.dev \
+    --cc=platform-driver-x86@vger.kernel.org \
+    --cc=sergiomelas@gmail.com \
+    /path/to/YOUR_REPLY
+
+  https://kernel.org/pub/software/scm/git/docs/git-send-email.html
+
+* If your mail client supports setting the In-Reply-To header
+  via mailto: links, try the mailto: link
+Be sure your reply has a Subject: header at the top and a blank line before the message body.
+This is an external index of several public inboxes,
+see mirroring instructions on how to clone and mirror
+all data and code used by this external index.

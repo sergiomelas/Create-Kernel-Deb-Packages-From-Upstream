@@ -1,0 +1,139 @@
+From: Guenter Roeck <linux@roeck-us.net>
+To: sashiko@lists.linux.dev, Sergio Melas <sergiomelas@gmail.com>
+Cc: linux-hwmon@vger.kernel.org
+Subject: Re: [PATCH v1] hwmon: (yogafan) Massive hardware expansion and structural refactoring
+Date: Mon, 13 Apr 2026 06:51:29 -0700	[thread overview]
+Message-ID: <a899500e-cc92-45bf-b377-4b0680cdad60@roeck-us.net> (raw)
+In-Reply-To: <20260413063835.2C331C116C6@smtp.kernel.org>
+
+On 4/12/26 23:38, sashiko-bot@kernel.org wrote:
+> Sashiko AI review found 3 potential issue(s):
+> - [Medium] The driver's anti-spam polling protection fails to prevent rapid ACPI reads, exposing the Embedded Controller (EC) to the exact polling spam it claims to prevent.
+> - [Medium] The DMI quirk table relies on short, non-unique strings without matching the system vendor, risking unintended driver binding on non-Lenovo hardware.
+> - [Medium] The `const` qualifier was removed from all hardware profile structures, directly contradicting the documented security architecture.
+> --
+>
+
+Those are genuine concerns as far as I can see. Please address.
+
+Thanks,
+Guenter
+
+> commit 4e3a104ba986fdf8eb4e1dff6e4429669d7cf376
+> Author: Sergio Melas <sergiomelas@gmail.com>
+>
+> hwmon: (yogafan) Massive hardware expansion and structural refactoring
+>
+> This commit expands support for Lenovo consumer laptops in the yogafan driver,
+> replacing the pilot implementation with a 7-series Hardware Abstraction Layer.
+> It introduces discrete-step EC estimation, DMI quirk-based multi-path ACPI
+> discovery, and implements physics-based RLLag filter dynamics.
+>
+>> diff --git a/drivers/hwmon/yogafan.c b/drivers/hwmon/yogafan.c
+>> --- a/drivers/hwmon/yogafan.c
+>> +++ b/drivers/hwmon/yogafan.c
+> [ ... ]
+>> +/* 1.1 Single-Fan Continuous */
+>> +
+>> +/* Reference Model: Yoga 14cACN (d=50mm) - Baseline inertia (Reference J) */
+>> +static struct yogafan_config yoga_continuous_8bit_cfg = {
+>> +	.multiplier = 100, .fan_count = 1, .n_max = 0,
+>> +	.r_max = 5500, .tau_ms = 1000, .slew_time_s = 4, .stop_threshold = 50,
+>> +	.paths = { "\\_SB.PCI0.LPC0.EC0.FANS", "\\_SB.PCI0.LPC0.EC0.FAN0" }
+>>   };
+>
+> Does removing the const qualifier from these hardware profiles contradict the
+> security architecture outlined in the documentation?
+>
+> The documentation explicitly claims adherence to IEC 62443 by using read-only
+> section (.rodata) placement via "static const" to prevent runtime tampering.
+> Because these structures are no longer const, they will be placed in writable
+> memory (.data).
+>
+> [ ... ]
+>> +	/* 2. Get hardware data only for INPUT requests */
+>>   	status = acpi_evaluate_integer(data->active_handles[channel], NULL, NULL, &raw_acpi);
+>>   	if (ACPI_FAILURE(status))
+>>   		return -EIO;
+>>
+>> -	apply_rllag_filter(data, channel, (long)raw_acpi * data->multiplier);
+>> -	*val = data->filtered_val[channel];
+>> +	/* 3. Calculate raw RPM based on architecture */
+>> +	if (cfg->n_max > 0)
+>> +		/* Use s64 promotion to prevent overflow during multiplication before division */
+>> +		rpm_raw = (long)div64_s64((s64)data->device_max_rpm * raw_acpi, cfg->n_max);
+>> +	else
+>> +		rpm_raw = (long)raw_acpi * cfg->multiplier;
+>> +
+>> +	/* 4. Apply filter only for real speed readings */
+>> +	apply_rllag_filter(data, channel, rpm_raw);
+>
+> Does this actually prevent rapid polling to the Embedded Controller (EC)?
+>
+> The commit documentation mentions a Cybersecurity Gating mechanism to ignore
+> polling spam faster than 100ms. However, acpi_evaluate_integer() is
+> unconditionally called here in yoga_fan_read() before invoking
+> apply_rllag_filter().
+>
+> Since apply_rllag_filter() checks the time delta and drops the reading if it
+> is too fast, the EC is still queried on every sysfs read and the result is
+> simply discarded. Should the time check happen before acpi_evaluate_integer()
+> to truly protect the EC?
+>
+> [ ... ]
+>> -static const struct dmi_system_id yogafan_quirks[] = {
+>> +static const struct dmi_system_id yogafan_quirks[] = {
+>> +/* --- 1. YOGA SERIES --- */
+>> +	{
+>> +		.ident = "Lenovo Yoga Pro 9i (83DN)",
+>> +		.matches = { DMI_MATCH(DMI_PRODUCT_NAME, "83DN") },
+>> +		.driver_data = &legion_high_perf_cfg, /* 16" Chassis - High Inertia */
+>> +	},
+>
+> Could matching on short strings like "83DN" without the system vendor
+> constraint risk binding to non-Lenovo hardware?
+>
+> The previous implementation included DMI_MATCH(DMI_SYS_VENDOR, "LENOVO").
+> Without it, these short product name identifiers might collide with hardware
+> from other manufacturers. If an unrelated system matches the string and uses
+> a common ACPI path like \_SB.PCI0.LPC0.EC0.FAN0, the driver might bind and
+> interact with the EC unintentionally.
+>
+
+next prev parent reply	other threads:[~2026-04-13 13:51 UTC|newest]
+
+Thread overview: 4+ messages / expand[flat|nested]  mbox.gz  Atom feed  top
+2026-04-13  6:09 [PATCH v1] hwmon: (yogafan) Massive hardware expansion and structural refactoring Sergio Melas
+2026-04-13  6:38 ` sashiko-bot
+2026-04-13 13:51   ` Guenter Roeck [this message]
+2026-04-13 13:55     ` Guenter Roeck
+Reply instructions:
+
+You may reply publicly to this message via plain-text email
+using any one of the following methods:
+
+* Save the following mbox file, import it into your mail client,
+  and reply-to-all from there: mbox
+
+  Avoid top-posting and favor interleaved quoting:
+  https://en.wikipedia.org/wiki/Posting_style#Interleaved_style
+
+* Reply using the --to, --cc, and --in-reply-to
+  switches of git-send-email(1):
+
+  git send-email \
+    --in-reply-to=a899500e-cc92-45bf-b377-4b0680cdad60@roeck-us.net \
+    --to=linux@roeck-us.net \
+    --cc=linux-hwmon@vger.kernel.org \
+    --cc=sashiko@lists.linux.dev \
+    --cc=sergiomelas@gmail.com \
+    /path/to/YOUR_REPLY
+
+  https://kernel.org/pub/software/scm/git/docs/git-send-email.html
+
+* If your mail client supports setting the In-Reply-To header
+  via mailto: links, try the mailto: link
+Be sure your reply has a Subject: header at the top and a blank line before the message body.
+This is an external index of several public inboxes,
+see mirroring instructions on how to clone and mirror
+all data and code used by this external index.
