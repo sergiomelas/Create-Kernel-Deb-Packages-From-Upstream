@@ -1,0 +1,8 @@
+sudo dmidecode -s system-family
+Yoga 740-15IML
+sudo dmidecode -s system-product-name
+81TD
+
+Provider:
+repinger
+
