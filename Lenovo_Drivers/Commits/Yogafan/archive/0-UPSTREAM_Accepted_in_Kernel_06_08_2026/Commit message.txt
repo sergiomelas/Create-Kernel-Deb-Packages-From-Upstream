@@ -1,0 +1,11 @@
+hwmon: (yogafan) Add support for new Lenovo models
+
+Add DMI quirk entries and map correct ACPI paths and configurations for
+additional Lenovo laptop models including the LOQ 15IAX9,
+XiaoXin Pro 13ARE 2020, IdeaPad 3 15ALC6, Legion Pro 7 16AFR10H,
+Yoga Pro 7 14IAH10, and Yoga 7 16ARP8.
+
+Reorder the DMI quirk table to evaluate specific model matches before
+generic family fallbacks, preventing DMI shadowing.
+
+Signed-off-by: Sergio Melas <sergiomelas@gmail.com>

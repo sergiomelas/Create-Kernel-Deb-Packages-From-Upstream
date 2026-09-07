@@ -1,0 +1,84 @@
+[PATCH] hwmon: (yogafan) Add support for new Lenovo models
+
+This driver provides fan speed monitoring for modern Lenovo consumer laptops
+by interfacing with the Embedded Controller (EC) via ACPI.
+
+To address low-resolution sampling in Lenovo EC firmware, a Rate-Limited
+Lag (RLLag) filter is implemented. The filter ensures a consistent physical
+curve regardless of userspace polling frequency.
+
+Hardware identification is performed via DMI-based quirk tables, which
+map specific ACPI object paths and register widths (8-bit vs 16-bit)
+deterministically. This patch introduces specific quirks for the Lenovo
+LOQ 15IAX9, IdeaPad 3 15ALC6, Legion Pro 7 16AFR10H, Yoga Pro 7 14IAH10,
+and Yoga 7 16ARP8.
+
+
+Signed-off-by: Sergio Melas <sergiomelas@gmail.com>
+---
+v12:
+  - Reordered yogafan_quirks table so exact model matches are evaluated
+    before generic family fallbacks, preventing DMI shadowing.
+  - Added support and proper DMI/ACPI mappings for Lenovo LOQ 15IAX9,
+    IdeaPad 3 15ALC6, Legion Pro 7 16AFR10H, Yoga Pro 7 14IAH10, and
+    Yoga 7 16ARP8 (with thanks to community DSDT contributors).
+  - Updated Documentation/hwmon/yogafan.rst reference database and credits.
+v11.1:
+  - Fix comment header to resolve 0-day robot warning.
+v11:
+  - Mapped ACPI paths directly via DMI quirks.
+  - Fixed Documentation formatting (0-day robot warnings).
+  - Implemented 100ms MIN_SAMPLING to address rapid polling concerns.
+  - Removed redundant platform_set_drvdata() in probe.
+  - Explicitly defined platform device ID as -1 for cleaner sysfs naming.
+v9/10:
+  - Implement ACPI handle resolution during probe for better performance (O(1) read).
+  - Add MODULE_DEVICE_TABLE(dmi, ...) to enable module autoloading.
+  - Refine RLLag filter documentation and suspend/resume logic.
+  - Include comprehensive EC architecture research database (8-bit vs 16-bit).
+  - Validated efficiency on kernels 6.18, 6.19, and 7.0-rc5: 'perf top'
+    confirms negligible CPU overhead (<0.01%) during active polling.
+v8:
+  - Replaced heuristic multiplier with deterministic DMI Quirk Table.
+  - Added 'depends on DMI' to Kconfig.
+  - Verified FOPTD model (1000ms TAU / 1500 RPM/s slew) against hardware traces.
+  - Increased filter precision to 12-bit fixed-point.
+v7:
+  - Fixed Kconfig: Removed non-existent 'select MATH64'.
+  - Fixed unused macro: Utilized RPM_FLOOR_LIMIT to implement an
+    immediate 0-RPM bypass in the filter.
+  - Clarification: Previous "unified structure" comment meant that all
+    6 files (driver, docs, metadata) are now in this single atomic patch.
+v6:
+  - Unified patch structure (6 files changed).
+  - Verified FOPTD (First-Order Plus Time Delay) model against hardware
+      traces (Yoga 14c) to ensure physical accuracy of the 1000ms time constant.
+  - Fixed a rounding stall: added a +/- 1 RPM floor to the step calculation
+    to ensure convergence even at high polling frequencies.
+  - Set MAX_SLEW_RPM_S to 1500 to match physical motor inertia.
+  - Documentation: Updated to clarify 100-RPM hardware step resolution.
+  - 32-bit safety: Implemented div64_s64 for coefficient precision.
+v5:
+  - Fixed 32-bit build failures by using div64_s64 for 64-bit division.
+  - Extracted magic numbers into constants (RPM_UNIT_THRESHOLD, etc.).
+  - Fixed filter stall by ensuring a minimum slew limit (limit = 1).
+  - Refined RPM floor logic to trigger only when hardware reports 0 RPM.
+  - Resolved 255/256 unit-jump bug by adjusting heuristic thresholds.
+v4:
+  - Rebased on groeck/hwmon-next branch for clean application.
+  - Corrected alphabetical sorting in Kconfig and Makefile.
+  - Technical Validation & FOPTD Verification:
+    - Implemented RLLag (Rate-Limited Lag) first-order modeling.
+    - Used 10-bit fixed-point math for alpha calculation to avoid
+      floating point overhead in the kernel.
+    - Added 5000ms filter reset for resume/long-polling sanitation.
+v3:
+  - Added MAINTAINERS entry and full Documentation/hwmon/yogafan.rst.
+  - Fixed integer overflow in filter math.
+  - Added support for secondary fan paths (FA2S) for Legion laptops.
+v2:
+  - Migrated from background worker to passive multirate filtering.
+  - Implemented dt-based scaling to maximize CPU sleep states.
+  - Restricted driver to Lenovo hardware via DMI matching.
+v1:
+  - Initial submission with basic ACPI fan path support.

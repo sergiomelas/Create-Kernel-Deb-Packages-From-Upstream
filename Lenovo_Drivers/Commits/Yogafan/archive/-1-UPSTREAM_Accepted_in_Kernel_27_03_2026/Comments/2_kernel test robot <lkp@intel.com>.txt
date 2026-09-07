@@ -1,0 +1,73 @@
+All of lore.kernel.org
+ help / color / mirror / Atom feed
+From: kernel test robot <lkp@intel.com>
+To: Sergio Melas <sergiomelas@gmail.com>
+Cc: llvm@lists.linux.dev, oe-kbuild-all@lists.linux.dev,
+	linux-kernel@vger.kernel.org, Guenter Roeck <linux@roeck-us.net>,
+	linux-doc@vger.kernel.org
+Subject: Warning: drivers/hwmon/yogafan.c:2 This comment starts with '/**', but isn't a kernel-doc comment. Refer to Documentation/doc-guide/kernel-doc.rst
+Date: Thu, 30 Apr 2026 14:46:09 +0800	[thread overview]
+Message-ID: <202604301429.UUK5MS9i-lkp@intel.com> (raw)
+
+Hi Sergio,
+
+First bad commit (maybe != root cause):
+
+tree:   https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git master
+head:   57b8e2d666a31fa201432d58f5fe3469a0dd83ba
+commit: c67c248ca406a86cf8b20bf1b3af5e7f3e36581f hwmon: (yogafan) Add support for Lenovo Yoga/Legion fan monitoring
+date:   4 weeks ago
+config: x86_64-allyesconfig (https://download.01.org/0day-ci/archive/20260430/202604301429.UUK5MS9i-lkp@intel.com/config)
+compiler: clang version 20.1.8 (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)
+reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20260430/202604301429.UUK5MS9i-lkp@intel.com/reproduce)
+
+If you fix the issue in a separate patch/commit (i.e. not just a new version of
+the same patch/commit), kindly add following tags
+| Fixes: c67c248ca406 ("hwmon: (yogafan) Add support for Lenovo Yoga/Legion fan monitoring")
+| Reported-by: kernel test robot <lkp@intel.com>
+| Closes: https://lore.kernel.org/oe-kbuild-all/202604301429.UUK5MS9i-lkp@intel.com/
+
+All warnings (new ones prefixed by >>):
+
+>> Warning: drivers/hwmon/yogafan.c:2 This comment starts with '/**', but isn't a kernel-doc comment. Refer to Documentation/doc-guide/kernel-doc.rst
+    * yoga_fan.c - Lenovo Yoga/Legion Fan Hardware Monitoring Driver
+
+--
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests/wiki
+                 reply	other threads:[~2026-04-30  6:46 UTC|newest]
+
+Thread overview: [no followups] expand[flat|nested]  mbox.gz  Atom feed
+Reply instructions:
+
+You may reply publicly to this message via plain-text email
+using any one of the following methods:
+
+* Save the following mbox file, import it into your mail client,
+  and reply-to-all from there: mbox
+
+  Avoid top-posting and favor interleaved quoting:
+  https://en.wikipedia.org/wiki/Posting_style#Interleaved_style
+
+* Reply using the --to, --cc, and --in-reply-to
+  switches of git-send-email(1):
+
+  git send-email \
+    --in-reply-to=202604301429.UUK5MS9i-lkp@intel.com \
+    --to=lkp@intel.com \
+    --cc=linux-doc@vger.kernel.org \
+    --cc=linux-kernel@vger.kernel.org \
+    --cc=linux@roeck-us.net \
+    --cc=llvm@lists.linux.dev \
+    --cc=oe-kbuild-all@lists.linux.dev \
+    --cc=sergiomelas@gmail.com \
+    /path/to/YOUR_REPLY
+
+  https://kernel.org/pub/software/scm/git/docs/git-send-email.html
+
+* If your mail client supports setting the In-Reply-To header
+  via mailto: links, try the mailto: link
+Be sure your reply has a Subject: header at the top and a blank line before the message body.
+This is an external index of several public inboxes,
+see mirroring instructions on how to clone and mirror
+all data and code used by this external index.

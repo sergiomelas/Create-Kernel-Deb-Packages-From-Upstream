@@ -1,0 +1,98 @@
+From: Sarbajit Sarkar <sarbajitsarkar16108@gmail.com>
+To: sergiomelas@gmail.com
+Cc: linux-hwmon@vger.kernel.org,
+	Sarbajit Sarkar <sarbajitsarkar16108@gmail.com>
+Subject: [PATCH] hwmon: (yogafan) Add support for Lenovo LOQ 15IAX9
+Date: Fri, 10 Jul 2026 00:05:00 +0530	[thread overview]
+Message-ID: <20260709183500.13761-1-sarbajitsarkar16108@gmail.com> (raw)
+
+Add the Lenovo LOQ 15IAX9 product family to the yogafan dmi_system_id
+table. Unlike the Legion series, ACPI table extraction reveals this LOQ
+utilizes an 8-bit EC architecture with a 100x multiplier, but maintains
+a dual-fan setup via the \_SB.PC00.LPCB.EC0.FA1S and FA2S paths.
+
+A new loq_15iax9_8bit_dual_cfg structure was added to properly map these
+hardware registers and calculate RPMs correctly while avoiding path
+conflicts with AMD-based LOQ variants.
+
+Signed-off-by: Sarbajit Sarkar <sarbajitsarkar16108@gmail.com>
+---
+ drivers/hwmon/yogafan.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/drivers/hwmon/yogafan.c b/drivers/hwmon/yogafan.c
+index 605cc92..0a41b86 100644
+--- a/drivers/hwmon/yogafan.c
++++ b/drivers/hwmon/yogafan.c
+@@ -71,6 +71,12 @@ static const struct yogafan_config legion_16bit_dual_cfg = {
+ 	.paths = { "\\_SB.PCI0.LPC0.EC0.FANS", "\\_SB.PCI0.LPC0.EC0.FA2S" }
+ };
+
++static const struct yogafan_config loq_15iax9_8bit_dual_cfg = {
++	.multiplier = 100,
++	.fan_count = 2,
++	.paths = { "\\_SB.PC00.LPCB.EC0.FA1S", "\\_SB.PC00.LPCB.EC0.FA2S" }
++};
++
+ static void apply_rllag_filter(struct yoga_fan_data *data, int idx, long raw_rpm)
+ {
+ 	ktime_t now = ktime_get_boottime();
+@@ -194,6 +200,14 @@ static const struct dmi_system_id yogafan_quirks[] = {
+ 		},
+ 		.driver_data = (void *)&ideapad_8bit_fan0_cfg,
+ 	},
++	{
++		.ident = "Lenovo LOQ 15IAX9",
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
++			DMI_MATCH(DMI_PRODUCT_FAMILY, "LOQ 15IAX9"),
++		},
++		.driver_data = (void *)&loq_15iax9_8bit_dual_cfg,
++	},
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(dmi, yogafan_quirks);
+--
+2.55.0
+
+next             reply	other threads:[~2026-07-09 18:35 UTC|newest]
+
+Thread overview: 3+ messages / expand[flat|nested]  mbox.gz  Atom feed  top
+2026-07-09 18:35 Sarbajit Sarkar [this message]
+2026-07-09 18:42 ` [PATCH] hwmon: (yogafan) Add support for Lenovo LOQ 15IAX9 sashiko-bot
+2026-07-10 14:37 ` Guenter Roeck
+find likely ancestor, descendant, or conflicting patches for this message:
+( dfblob:605cc92 dfblob:0a41b86 )
+ OR (
+bs:"[PATCH] hwmon: (yogafan) Add support for Lenovo LOQ 15IAX9" )
+
+	(help)
+Reply instructions:
+
+You may reply publicly to this message via plain-text email
+using any one of the following methods:
+
+* Save the following mbox file, import it into your mail client,
+  and reply-to-all from there: mbox
+
+  Avoid top-posting and favor interleaved quoting:
+  https://en.wikipedia.org/wiki/Posting_style#Interleaved_style
+
+* Reply using the --to, --cc, and --in-reply-to
+  switches of git-send-email(1):
+
+  git send-email \
+    --in-reply-to=20260709183500.13761-1-sarbajitsarkar16108@gmail.com \
+    --to=sarbajitsarkar16108@gmail.com \
+    --cc=linux-hwmon@vger.kernel.org \
+    --cc=sergiomelas@gmail.com \
+    /path/to/YOUR_REPLY
+
+  https://kernel.org/pub/software/scm/git/docs/git-send-email.html
+
+* If your mail client supports setting the In-Reply-To header
+  via mailto: links, try the mailto: link
+Be sure your reply has a Subject: header at the top and a blank line before the message body.
+This is an external index of several public inboxes,
+see mirroring instructions on how to clone and mirror
+all data and code used by this external index.
