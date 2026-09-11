@@ -1,0 +1,120 @@
+All of lore.kernel.org
+ help / color / mirror / Atom feed
+From: sashiko-bot@kernel.org
+To: "Sergio Melas" <sergiomelas@gmail.com>
+Cc: linux-hwmon@vger.kernel.org
+Subject: Re: [PATCH] hwmon: (yogafan) Add support for new Lenovo models
+Date: Thu, 06 Aug 2026 13:24:51 +0000	[thread overview]
+Message-ID: <20260806132452.80AD21F000E9@smtp.kernel.org> (raw)
+In-Reply-To: <20260806131103.19104-1-sergiomelas@gmail.com>
+
+Thank you for your contribution! Sashiko AI review found 1 potential issue(s) to consider:
+- [High] Specific Lenovo model DMI quirks incorrectly use `DMI_PRODUCT_FAMILY` for exact model string matching, causing all specific quirks to fail and fall back to incorrect generic profiles.
+--
+
+--- Patch [1]: [PATCH] hwmon: (yogafan) Add support for new Lenovo models ---
+commit ea309cfac96f236f87726dc09f574a3015681685
+Author: Sergio Melas <sergiomelas@gmail.com>
+
+hwmon: (yogafan) Add support for new Lenovo models
+
+This patch adds DMI quirk entries mapping correct ACPI paths and
+configurations for several additional Lenovo laptop models. It also reorders
+the quirk table to evaluate specific model matches before generic family
+fallbacks to prevent DMI shadowing.
+
+> diff --git a/drivers/hwmon/yogafan.c b/drivers/hwmon/yogafan.c
+> index 0a41b8672b56e..48fa5148d9e2c 100644
+> --- a/drivers/hwmon/yogafan.c
+> +++ b/drivers/hwmon/yogafan.c
+[ ... ]
+> @@ -176,6 +189,54 @@ static const struct hwmon_chip_info yoga_fan_chip_info = {
+>  };
+>
+>  static const struct dmi_system_id yogafan_quirks[] = {
+[ ... ]
+> +	{
+> +		.ident = "Lenovo IdeaPad 3 15ALC6",
+> +		.matches = {
+> +			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
+> +			DMI_MATCH(DMI_PRODUCT_FAMILY, "IdeaPad 3 15ALC6"),
+
+[Severity: High]
+Does this correctly match the hardware?
+
+Lenovo firmware typically populates DMI_PRODUCT_FAMILY with short generic
+strings (e.g., "IdeaPad"). Since dmi_first_match() uses strstr() to find the
+quirk string inside the hardware string, searching for a long specific string
+like "IdeaPad 3 15ALC6" inside "IdeaPad" will always fail.
+
+Should this match against DMI_PRODUCT_VERSION or DMI_PRODUCT_NAME instead?
+
+> +		},
+> +		.driver_data = (void *)&ideapad_8bit_fan0_cfg,
+> +	},
+> +	{
+> +		.ident = "Lenovo Legion Pro 7 16AFR10H",
+> +		.matches = {
+> +			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
+> +			DMI_MATCH(DMI_PRODUCT_FAMILY, "Legion Pro 7 16AFR10H"),
+
+[Severity: High]
+If this match fails for the same reason, the hardware would fall back to the
+generic "Legion" quirk at the bottom of the table.
+
+Because the generic profile specifies a multiplier of 1 instead of 100, wouldn't
+this result in wildly incorrect sensor readings for this hardware?
+
+> +		},
+> +		.driver_data = (void *)&xiaoxin_8bit_dual_cfg,
+> +	},
+> +	{
+> +		.ident = "Lenovo Yoga Pro 7 14IAH10",
+> +		.matches = {
+> +			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
+> +			DMI_MATCH(DMI_PRODUCT_FAMILY, "Yoga Pro 7 14IAH10"),
+
+[Severity: High]
+Similarly, if this match fails and falls back to the generic "Yoga" quirk,
+the driver would attempt to use the PCI0.LPC0 ACPI path instead of PC00.LPCB.
+Could this cause the driver to fail to probe on this device?
+
+> +		},
+
+--
+Sashiko AI review · https://sashiko.dev/#/patchset/20260806131103.19104-1-sergiomelas@gmail.com?part=1
+     prev parent reply	other threads:[~2026-08-06 13:24 UTC|newest]
+
+Thread overview: 2+ messages / expand[flat|nested]  mbox.gz  Atom feed  top
+2026-08-06 13:11 [PATCH] hwmon: (yogafan) Add support for new Lenovo models Sergio Melas
+2026-08-06 13:24 ` sashiko-bot [this message]
+Reply instructions:
+
+You may reply publicly to this message via plain-text email
+using any one of the following methods:
+
+* Save the following mbox file, import it into your mail client,
+  and reply-to-all from there: mbox
+
+  Avoid top-posting and favor interleaved quoting:
+  https://en.wikipedia.org/wiki/Posting_style#Interleaved_style
+
+* Reply using the --to, --cc, and --in-reply-to
+  switches of git-send-email(1):
+
+  git send-email \
+    --in-reply-to=20260806132452.80AD21F000E9@smtp.kernel.org \
+    --to=sashiko-bot@kernel.org \
+    --cc=linux-hwmon@vger.kernel.org \
+    --cc=sashiko-reviews@lists.linux.dev \
+    --cc=sergiomelas@gmail.com \
+    /path/to/YOUR_REPLY
+
+  https://kernel.org/pub/software/scm/git/docs/git-send-email.html
+
+* If your mail client supports setting the In-Reply-To header
+  via mailto: links, try the mailto: link
+Be sure your reply has a Subject: header at the top and a blank line before the message body.
+This is an external index of several public inboxes,
+see mirroring instructions on how to clone and mirror
+all data and code used by this external index.

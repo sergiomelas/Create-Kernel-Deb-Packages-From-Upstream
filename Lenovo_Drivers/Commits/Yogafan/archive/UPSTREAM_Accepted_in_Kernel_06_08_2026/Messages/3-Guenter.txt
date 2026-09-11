@@ -1,0 +1,101 @@
+All of lore.kernel.org
+ help / color / mirror / Atom feed
+From: Guenter Roeck <linux@roeck-us.net>
+To: Sergio Melas <sergiomelas@gmail.com>
+Cc: sashiko-reviews@lists.linux.dev, linux-hwmon@vger.kernel.org
+Subject: Re: [PATCH] hwmon: (yogafan) Add support for new Lenovo models
+Date: Thu, 6 Aug 2026 12:17:33 -0700	[thread overview]
+Message-ID: <4b0305a8-f2a1-428f-85f8-b1b731fc2ae9@roeck-us.net> (raw)
+In-Reply-To: <CAP8e=sJbD21FyeU+9w_CVGLOXhxdWmsCwcrS5uNB0Z+9qQ4gLQ@mail.gmail.com>
+
+On 8/6/26 11:26, Sergio Melas wrote:
+> Hi Guenter,
+>
+> Confirming that at my knowledge this is a non-issue.
+> However, using the 4-letter machine type code DMI_PRODUCT_NAME could
+> theoretically
+> offer even tighter precision, but up to now, the current matching
+> method has never failed in our
+> testing and field deployment users of my github:
+> https://github.com/sergiomelas/lenovo-linux-drivers/tree/main
+>
+> Anyway, I am compiling a full database for complete data of Lenovo
+> machines from PSREF:
+> https://psref.lenovo.com/
+> For reference, the complete mapping matrix and DSDT traces can be
+> found in the Yogafan Master Quirk Database.
+> My database on based on this source and others is here:
+> https://github.com/sergiomelas/lenovo-linux-drivers/blob/main/Lenovo_Drivers/Prototype/PSREF/yogafan_v3_quirks_database.ods
+> and
+> https://github.com/sergiomelas/lenovo-linux-drivers/tree/main/Lenovo_Drivers/Prototype/DSDT
+>
+> I propose to switch to this identification method when we have more
+> machine references.
+> What do yo think?
+>
+
+No need from my perspective, if the current code works.
+I'll go ahead and apply your patch.
+
+Thanks,
+Guenter
+
+> Thanks, Sergio
+>
+>
+>
+> On Thu, Aug 6, 2026 at 5:44 PM Guenter Roeck <linux@roeck-us.net> wrote:
+>>
+>> Sergio,
+>>
+>> On 8/6/26 06:24, sashiko-bot@kernel.org wrote:
+>>> Thank you for your contribution! Sashiko AI review found 1 potential issue(s) to consider:
+>>> - [High] Specific Lenovo model DMI quirks incorrectly use `DMI_PRODUCT_FAMILY` for exact model string matching, causing all specific quirks to fail and fall back to incorrect generic profiles.
+>>> --
+>>
+>> Please confirm that this is a non-issue.
+>>
+>> Thanks,
+>> Guenter
+>>
+>
+
+next prev parent reply	other threads:[~2026-08-06 19:17 UTC|newest]
+
+Thread overview: 6+ messages / expand[flat|nested]  mbox.gz  Atom feed  top
+2026-08-06 13:11 [PATCH] hwmon: (yogafan) Add support for new Lenovo models Sergio Melas
+2026-08-06 13:24 ` sashiko-bot
+2026-08-06 15:44   ` Guenter Roeck
+2026-08-06 18:26     ` Sergio Melas
+2026-08-06 19:17       ` Guenter Roeck [this message]
+2026-08-06 19:18 ` Guenter Roeck
+Reply instructions:
+
+You may reply publicly to this message via plain-text email
+using any one of the following methods:
+
+* Save the following mbox file, import it into your mail client,
+  and reply-to-all from there: mbox
+
+  Avoid top-posting and favor interleaved quoting:
+  https://en.wikipedia.org/wiki/Posting_style#Interleaved_style
+
+* Reply using the --to, --cc, and --in-reply-to
+  switches of git-send-email(1):
+
+  git send-email \
+    --in-reply-to=4b0305a8-f2a1-428f-85f8-b1b731fc2ae9@roeck-us.net \
+    --to=linux@roeck-us.net \
+    --cc=linux-hwmon@vger.kernel.org \
+    --cc=sashiko-reviews@lists.linux.dev \
+    --cc=sergiomelas@gmail.com \
+    /path/to/YOUR_REPLY
+
+  https://kernel.org/pub/software/scm/git/docs/git-send-email.html
+
+* If your mail client supports setting the In-Reply-To header
+  via mailto: links, try the mailto: link
+Be sure your reply has a Subject: header at the top and a blank line before the message body.
+This is an external index of several public inboxes,
+see mirroring instructions on how to clone and mirror
+all data and code used by this external index.

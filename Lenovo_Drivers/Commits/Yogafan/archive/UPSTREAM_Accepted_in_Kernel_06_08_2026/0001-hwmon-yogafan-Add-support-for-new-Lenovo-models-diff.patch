@@ -1,0 +1,172 @@
+From cfcea535db6549d7bbb17955e6529b1b2ecb33e6 Mon Sep 17 00:00:00 2001
+From: Sergio Melas <sergiomelas@gmail.com>
+Date: Thu, 6 Aug 2026 12:25:17 +0200
+Subject: [PATCH] hwmon: (yogafan) Add support for new Lenovo models
+
+Add DMI quirk entries and map correct ACPI paths and configurations for
+additional Lenovo laptop models including the LOQ 15IAX9, 
+XiaoXin Pro 13ARE 2020, IdeaPad 3 15ALC6, Legion Pro 7 16AFR10H, 
+Yoga Pro 7 14IAH10, and Yoga 7 16ARP8.
+
+Reorder the DMI quirk table to evaluate specific model matches before
+generic family fallbacks, preventing DMI shadowing.
+
+Signed-off-by: Sergio Melas <sergiomelas@gmail.com>
+---
+ Documentation/hwmon/yogafan.rst | 27 ++++++++++++-
+ drivers/hwmon/yogafan.c         | 69 +++++++++++++++++++++++++++++----
+ 2 files changed, 87 insertions(+), 9 deletions(-)
+
+diff --git a/Documentation/hwmon/yogafan.rst b/Documentation/hwmon/yogafan.rst
+index 68761947a..6395c94f4 100644
+--- a/Documentation/hwmon/yogafan.rst
++++ b/Documentation/hwmon/yogafan.rst
+@@ -99,6 +99,11 @@ immediately to ensure the user knows the fan has stopped.
+  82XV / 83DV    | LOQ 15/16        | 0xFE/0xFF | \_SB.PCI0.LPC0.EC0.FANS /FA2S  | 16-bit | 1
+  83AK           | ThinkBook G6     | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
+  81X1           | Flex 5           | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
++ 83KF           | XiaoXinPro 13ARE | 0x06/0xFE | \_SB.PCI0.LPC0.EC0.FANS/FA2S   |  8-bit | 100
++ 82KU           | IdeaPad 3 15ALC6 | 0x06      | \_SB.PCI0.LPC0.EC0.FAN0        |  8-bit | 100
++ 83RU           | Legion Pro 7 16  | 0x03/0x06 | \_SB.PCI0.LPC0.EC0.FANS/FA2S   |  8-bit | 100
++ 83KF           | Yoga Pro 7 14IAH | 0x06      | \_SB.PC00.LPCB.EC0.FANS        |  8-bit | 100
++ 83BS           | Yoga 7 16ARP8    | 0x03/0x06 | \_SB.PCI0.LPC0.EC0.FANS/FA2S   |  8-bit | 100
+  *Legacy*       | Pre-2020 Models  | 0x06      | \_SB.PCI0.LPC.EC.FAN0          |  8-bit | 100
+  ----------------------------------------------------------------------------------------------------
+ 
+@@ -117,7 +122,6 @@ METHODOLOGY & IDENTIFICATION:
+    - 8-bit (Multiplier 100): Standard for Yoga/IdeaPad. Raw values (0-255).
+    - 16-bit (Multiplier 1): Standard for Legion/LOQ. Two registers (0xFE/0xFF).
+ 
+-
+ References
+ ----------
+ 
+@@ -136,3 +140,24 @@ References
+ 4. **Lenovo IdeaPad Laptop Driver:** Reference for DMI-based hardware
+    feature gating in Lenovo laptops.
+    https://github.com/torvalds/linux/blob/master/drivers/platform/x86/lenovo/ideapad-laptop.c
++
++5. **Lenovo Product Specifications Reference (PSREF):** Official hardware layout index
++   and spec sheets for active and withdrawn Lenovo laptop models.
++   https://psref.lenovo.com/l/withdrawn/
++
++6. **Yogafan Master Quirk Database:** Master spreadsheet mapping Lenovo Product
++   Specifications Reference (PSREF) to explicit EC offsets, register widths, paths, and multipliers.
++   https://github.com/sergiomelas/lenovo-linux-drivers/blob/main/Lenovo_Drivers/Prototype/PSREF/yogafan_v3_quirks_database.ods
++
++7. **Yogafan ACPI DSDT Repository:** Central repository containing user-contributed raw
++   and decompiled ACPI DSDT firmware dumps used for path verification and hardware expansions.
++   https://github.com/sergiomelas/lenovo-linux-drivers/tree/main/Lenovo_Drivers/Prototype/DSDT
++
++Contributors & DSDT Providers:
++------------------------------
++- **Sarbajit Sarkar** (Lenovo LOQ 15IAX9)
++- **HinataKato** (XiaoXin Pro 13ARE 2020 - 83KF)
++- **PenPenIsGod** (IdeaPad 3 15ALC6 - 82KU & Legion Pro 7 16AFR10H - 83RU)
++- **unlockxiaom** (Legion Pro 7 16AFR10H - 83RU, Yoga Pro 7 14IAH10 - 83KF, ThinkCentre M80q)
++- **Phani Pavan K** (Yoga Pro 7 14IAH10 - 83KF)
++- **Splarkszter** (Yoga 7 16ARP8 - 83BS)
+diff --git a/drivers/hwmon/yogafan.c b/drivers/hwmon/yogafan.c
+index 0a41b8672..48fa5148d 100644
+--- a/drivers/hwmon/yogafan.c
++++ b/drivers/hwmon/yogafan.c
+@@ -53,6 +53,7 @@ struct yoga_fan_data {
+ };
+ 
+ /* Specific configurations mapped via DMI */
++
+ static const struct yogafan_config yoga_8bit_fans_cfg = {
+ 	.multiplier = 100,
+ 	.fan_count = 1,
+@@ -77,6 +78,18 @@ static const struct yogafan_config loq_15iax9_8bit_dual_cfg = {
+ 	.paths = { "\\_SB.PC00.LPCB.EC0.FA1S", "\\_SB.PC00.LPCB.EC0.FA2S" }
+ };
+ 
++static const struct yogafan_config xiaoxin_8bit_dual_cfg = {
++	.multiplier = 100,
++	.fan_count = 2,
++	.paths = { "\\_SB.PCI0.LPC0.EC0.FANS", "\\_SB.PCI0.LPC0.EC0.FA2S" }
++};
++
++static const struct yogafan_config yoga_pro_7_14iah10_cfg = {
++	.multiplier = 100,
++	.fan_count = 1,
++	.paths = { "\\_SB.PC00.LPCB.EC0.FANS", NULL }
++};
++
+ static void apply_rllag_filter(struct yoga_fan_data *data, int idx, long raw_rpm)
+ {
+ 	ktime_t now = ktime_get_boottime();
+@@ -176,6 +189,54 @@ static const struct hwmon_chip_info yoga_fan_chip_info = {
+ };
+ 
+ static const struct dmi_system_id yogafan_quirks[] = {
++	{
++		.ident = "Lenovo LOQ 15IAX9",
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
++			DMI_MATCH(DMI_PRODUCT_FAMILY, "LOQ 15IAX9"),
++		},
++		.driver_data = (void *)&loq_15iax9_8bit_dual_cfg,
++	},
++	{
++		.ident = "Lenovo XiaoXin Pro 13ARE 2020",
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
++			DMI_MATCH(DMI_PRODUCT_FAMILY, "XiaoXinPro-13ARE 2020"),
++		},
++		.driver_data = (void *)&xiaoxin_8bit_dual_cfg,
++	},
++	{
++		.ident = "Lenovo IdeaPad 3 15ALC6",
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
++			DMI_MATCH(DMI_PRODUCT_FAMILY, "IdeaPad 3 15ALC6"),
++		},
++		.driver_data = (void *)&ideapad_8bit_fan0_cfg,
++	},
++	{
++		.ident = "Lenovo Legion Pro 7 16AFR10H",
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
++			DMI_MATCH(DMI_PRODUCT_FAMILY, "Legion Pro 7 16AFR10H"),
++		},
++		.driver_data = (void *)&xiaoxin_8bit_dual_cfg,
++	},
++	{
++		.ident = "Lenovo Yoga Pro 7 14IAH10",
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
++			DMI_MATCH(DMI_PRODUCT_FAMILY, "Yoga Pro 7 14IAH10"),
++		},
++		.driver_data = (void *)&yoga_pro_7_14iah10_cfg,
++	},
++	{
++		.ident = "Lenovo Yoga 7 16ARP8",
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
++			DMI_MATCH(DMI_PRODUCT_FAMILY, "Yoga 7 16ARP8"),
++		},
++		.driver_data = (void *)&xiaoxin_8bit_dual_cfg,
++	},
+ 	{
+ 		.ident = "Lenovo Yoga",
+ 		.matches = {
+@@ -200,14 +261,6 @@ static const struct dmi_system_id yogafan_quirks[] = {
+ 		},
+ 		.driver_data = (void *)&ideapad_8bit_fan0_cfg,
+ 	},
+-	{
+-		.ident = "Lenovo LOQ 15IAX9",
+-		.matches = {
+-			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
+-			DMI_MATCH(DMI_PRODUCT_FAMILY, "LOQ 15IAX9"),
+-		},
+-		.driver_data = (void *)&loq_15iax9_8bit_dual_cfg,
+-	},
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(dmi, yogafan_quirks);
+-- 
+2.55.0
+

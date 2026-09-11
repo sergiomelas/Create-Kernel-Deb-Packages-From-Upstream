@@ -1,0 +1,33 @@
+On Fri, May 1, 2026 at 1:57 AM Guenter Roeck <linux@roeck-us.net> wrote:
+On Sat, Apr 18, 2026 at 12:44:11AM +0530, Ninad Naik wrote:
+> The ideapad-laptop.c file now exists inside drivers/platform/x86/lenovo/
+> directory. Updating the GitHub link to the correct path.
+>
+> Signed-off-by: Ninad Naik <ninadnaik07@gmail.com>
+
+Applied.
+
+Thanks,
+Guenter
+
+On Sat, Apr 18, 2026 at 3:15 AM Ninad Naik <ninadnaik07@gmail.com> wrote:
+The ideapad-laptop.c file now exists inside drivers/platform/x86/lenovo/
+directory. Updating the GitHub link to the correct path.
+
+Signed-off-by: Ninad Naik <ninadnaik07@gmail.com>
+---
+ Documentation/hwmon/yogafan.rst | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Documentation/hwmon/yogafan.rst b/Documentation/hwmon/yogafan.rst
+index c553a381f772..68761947a1a8 100644
+--- a/Documentation/hwmon/yogafan.rst
++++ b/Documentation/hwmon/yogafan.rst
+@@ -135,4 +135,4 @@ References
+
+ 4. **Lenovo IdeaPad Laptop Driver:** Reference for DMI-based hardware
+    feature gating in Lenovo laptops.
+-   https://github.com/torvalds/linux/blob/master/drivers/platform/x86/ideapad-laptop.c
++   https://github.com/torvalds/linux/blob/master/drivers/platform/x86/lenovo/ideapad-laptop.c
+--
+2.53.0

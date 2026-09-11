@@ -1,0 +1,69 @@
+All of lore.kernel.org
+ help / color / mirror / Atom feed
+From: Guenter Roeck <linux@roeck-us.net>
+To: Sergio Melas <sergiomelas@gmail.com>
+Cc: Jean Delvare <jdelvare@suse.com>,
+	linux-hwmon@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH v11] hwmon: (yogafan) Add support for Lenovo Yoga/Legion fan monitoring
+Date: Fri, 27 Mar 2026 16:30:33 -0700	[thread overview]
+Message-ID: <7c8dcadb-7e9f-47b3-8bb7-80a0e8412837@roeck-us.net> (raw)
+In-Reply-To: <20260327221602.18832-1-sergiomelas@gmail.com>
+
+On Fri, Mar 27, 2026 at 11:16:02PM +0100, Sergio Melas wrote:
+> This driver provides fan speed monitoring for Lenovo Yoga, Legion, and
+> IdeaPad laptops by interfacing with the Embedded Controller (EC) via ACPI.
+>
+> To address low-resolution sampling in Lenovo EC firmware, a Rate-Limited
+> Lag (RLLag) filter is implemented. The filter ensures a consistent physical
+> curve regardless of userspace polling frequency.
+>
+> Hardware identification is performed via DMI-based quirk tables, which
+> map specific ACPI object paths and register widths (8-bit vs 16-bit)
+> deterministically.
+>
+> Signed-off-by: Sergio Melas <sergiomelas@gmail.com>
+
+Sashiko is happy, and I don't find anything to complain about anymore
+either, so...
+
+Applied.
+
+Thanks,
+Guenter
+next prev parent reply	other threads:[~2026-03-27 23:30 UTC|newest]
+
+Thread overview: 3+ messages / expand[flat|nested]  mbox.gz  Atom feed  top
+2026-03-27 22:16 [PATCH v11] hwmon: (yogafan) Add support for Lenovo Yoga/Legion fan monitoring Sergio Melas
+2026-03-27 23:30 ` Guenter Roeck [this message]
+2026-03-28 14:43   ` Sergio Melas
+Reply instructions:
+
+You may reply publicly to this message via plain-text email
+using any one of the following methods:
+
+* Save the following mbox file, import it into your mail client,
+  and reply-to-all from there: mbox
+
+  Avoid top-posting and favor interleaved quoting:
+  https://en.wikipedia.org/wiki/Posting_style#Interleaved_style
+
+* Reply using the --to, --cc, and --in-reply-to
+  switches of git-send-email(1):
+
+  git send-email \
+    --in-reply-to=7c8dcadb-7e9f-47b3-8bb7-80a0e8412837@roeck-us.net \
+    --to=linux@roeck-us.net \
+    --cc=jdelvare@suse.com \
+    --cc=linux-hwmon@vger.kernel.org \
+    --cc=linux-kernel@vger.kernel.org \
+    --cc=sergiomelas@gmail.com \
+    /path/to/YOUR_REPLY
+
+  https://kernel.org/pub/software/scm/git/docs/git-send-email.html
+
+* If your mail client supports setting the In-Reply-To header
+  via mailto: links, try the mailto: link
+Be sure your reply has a Subject: header at the top and a blank line before the message body.
+This is an external index of several public inboxes,
+see mirroring instructions on how to clone and mirror
+all data and code used by this external index.
