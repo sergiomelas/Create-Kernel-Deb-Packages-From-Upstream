@@ -1,0 +1,8 @@
+Documentation: hwmon: (yogafan) adjust table alignment for long model name
+
+Update the reStructuredText table layout and column separators to
+accommodate the longer product family string for the newly added IdeaPad
+model (IdeaPad 3 15ALC6 Ub). This prevents Sphinx build warnings and
+maintains proper visual alignment.
+
+Signed-off-by: Sergio Melas <sergiomelas@gmail.com>

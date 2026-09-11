@@ -1,0 +1,58 @@
+All of lore.kernel.org
+ help / color / mirror / Atom feed
+From: Guenter Roeck <linux@roeck-us.net>
+To: Sergio Melas <sergiomelas@gmail.com>
+Cc: linux-hwmon@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH v4] Documentation: hwmon: (yogafan) Update model reference table and contributors
+Date: Thu, 10 Sep 2026 17:50:24 -0700	[thread overview]
+Message-ID: <fa4b19f5-730d-4069-a868-c1281d26895e@roeck-us.net> (raw)
+In-Reply-To: <20260910184322.1816996-1-sergiomelas@gmail.com>
+
+On Thu, Sep 10, 2026 at 08:43:22PM +0200, Sergio Melas wrote:
+> Add the new IdeaPad 3 15ALC6 Ub model and Yoga 740-15IML, update existing
+> model entries, include corresponding contributors, and adjust the
+> reStructuredText table layout and column separators to accommodate the
+> longer strings and prevent Sphinx build warnings.
+>
+> Signed-off-by: Sergio Melas <sergiomelas@gmail.com>
+
+Applied.
+
+Thanks,
+Guenter
+     prev parent reply	other threads:[~2026-09-11  0:50 UTC|newest]
+
+Thread overview: 3+ messages / expand[flat|nested]  mbox.gz  Atom feed  top
+2026-09-10 18:43 [PATCH v4] Documentation: hwmon: (yogafan) Update model reference table and contributors Sergio Melas
+2026-09-10 18:46 ` sashiko-bot
+2026-09-11  0:50 ` Guenter Roeck [this message]
+Reply instructions:
+
+You may reply publicly to this message via plain-text email
+using any one of the following methods:
+
+* Save the following mbox file, import it into your mail client,
+  and reply-to-all from there: mbox
+
+  Avoid top-posting and favor interleaved quoting:
+  https://en.wikipedia.org/wiki/Posting_style#Interleaved_style
+
+* Reply using the --to, --cc, and --in-reply-to
+  switches of git-send-email(1):
+
+  git send-email \
+    --in-reply-to=fa4b19f5-730d-4069-a868-c1281d26895e@roeck-us.net \
+    --to=linux@roeck-us.net \
+    --cc=linux-hwmon@vger.kernel.org \
+    --cc=linux-kernel@vger.kernel.org \
+    --cc=sergiomelas@gmail.com \
+    /path/to/YOUR_REPLY
+
+  https://kernel.org/pub/software/scm/git/docs/git-send-email.html
+
+* If your mail client supports setting the In-Reply-To header
+  via mailto: links, try the mailto: link
+Be sure your reply has a Subject: header at the top and a blank line before the message body.
+This is an external index of several public inboxes,
+see mirroring instructions on how to clone and mirror
+all data and code used by this external index.

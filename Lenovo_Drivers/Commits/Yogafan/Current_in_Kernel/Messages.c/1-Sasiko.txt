@@ -1,0 +1,104 @@
+All of lore.kernel.org
+ help / color / mirror / Atom feed
+From: sashiko-bot@kernel.org
+To: "Sergio Melas" <sergiomelas@gmail.com>
+Cc: linux-hwmon@vger.kernel.org
+Subject: Re: [PATCH] hwmon: (yogafan) Add support for new Lenovo models
+Date: Mon, 07 Sep 2026 11:38:42 +0000	[thread overview]
+Message-ID: <20260907113843.3823B1F00A3A@smtp.kernel.org> (raw)
+In-Reply-To: <20260907112929.1531690-1-sergiomelas@gmail.com>
+
+Thank you for your contribution! Sashiko AI review found 1 potential issue(s) to consider:
+- [Low] The DMI quirk entry for 'Yoga 14cACN 2021' is completely redundant and duplicates the fallback generic 'Lenovo Yoga' configuration.
+--
+
+commit 11ad066ce5492c24b9a778e999582125b519d21a
+Author: Sergio Melas <sergiomelas@gmail.com>
+
+hwmon: (yogafan) Add support for new Lenovo models
+
+Add DMI quirk entries and map correct ACPI paths and configurations for
+additional Lenovo laptop models: Yoga 14cACN 2021, IdeaPad 3 15ALC6 Ub
+and Yoga 740-15IML, leveraging DMI product family matching.
+
+> diff --git a/drivers/hwmon/yogafan.c b/drivers/hwmon/yogafan.c
+> index 48fa5148d9e2c..2f86a8f6e0aeb 100644
+> --- a/drivers/hwmon/yogafan.c
+> +++ b/drivers/hwmon/yogafan.c
+
+[ ... ]
+
+> @@ -189,6 +194,30 @@ static const struct hwmon_chip_info yoga_fan_chip_info = {
+>  };
+>
+>  static const struct dmi_system_id yogafan_quirks[] = {
+
+[ ... ]
+
+> +	{
+> +		.ident = "Yoga 14cACN 2021",
+> +		.matches = {
+> +			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
+> +			DMI_MATCH(DMI_PRODUCT_FAMILY, "Yoga 14cACN 2021"),
+> +		},
+> +		.driver_data = (void *)&yoga_8bit_fans_cfg,
+> +	},
+
+[Severity: Low]
+Is this specific DMI entry necessary?
+
+Since DMI_MATCH performs a substring match, it appears any system with a
+product family containing "Yoga 14cACN 2021" would already match the
+generic "Yoga" fallback entry located later in this same array.
+
+Because both entries map to the exact same yoga_8bit_fans_cfg driver data,
+does this addition provide any functional benefit, or does it just
+duplicate the existing fallback behavior?
+
+--
+Sashiko AI review · https://sashiko.dev/#/patchset/20260907112929.1531690-1-sergiomelas@gmail.com?part=1
+next prev parent reply	other threads:[~2026-09-07 11:38 UTC|newest]
+
+Thread overview: 11+ messages / expand[flat|nested]  mbox.gz  Atom feed  top
+2026-09-07 11:29 [PATCH] hwmon: (yogafan) Add support for new Lenovo models Sergio Melas
+2026-09-07 11:38 ` sashiko-bot [this message]
+  -- strict thread matches above, loose matches on Subject: below --
+2026-09-06  2:10 Sergio Melas
+2026-09-06  2:17 ` sashiko-bot
+2026-09-06 16:35 ` Guenter Roeck
+2026-08-06 13:11 Sergio Melas
+2026-08-06 13:24 ` sashiko-bot
+2026-08-06 15:44   ` Guenter Roeck
+2026-08-06 18:26     ` Sergio Melas
+2026-08-06 19:17       ` Guenter Roeck
+2026-08-06 19:18 ` Guenter Roeck
+Reply instructions:
+
+You may reply publicly to this message via plain-text email
+using any one of the following methods:
+
+* Save the following mbox file, import it into your mail client,
+  and reply-to-all from there: mbox
+
+  Avoid top-posting and favor interleaved quoting:
+  https://en.wikipedia.org/wiki/Posting_style#Interleaved_style
+
+* Reply using the --to, --cc, and --in-reply-to
+  switches of git-send-email(1):
+
+  git send-email \
+    --in-reply-to=20260907113843.3823B1F00A3A@smtp.kernel.org \
+    --to=sashiko-bot@kernel.org \
+    --cc=linux-hwmon@vger.kernel.org \
+    --cc=sashiko-reviews@lists.linux.dev \
+    --cc=sergiomelas@gmail.com \
+    /path/to/YOUR_REPLY
+
+  https://kernel.org/pub/software/scm/git/docs/git-send-email.html
+
+* If your mail client supports setting the In-Reply-To header
+  via mailto: links, try the mailto: link
+Be sure your reply has a Subject: header at the top and a blank line before the message body.
+This is an external index of several public inboxes,
+see mirroring instructions on how to clone and mirror
+all data and code used by this external index.

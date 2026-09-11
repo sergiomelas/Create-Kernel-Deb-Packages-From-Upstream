@@ -1,0 +1,7 @@
+hwmon: (yogafan) Update reference database and contributors for new models
+
+Add documentation entries for the newly supported laptop models
+(Yoga 14cACN 2021, Yoga 740-15IML, and IdeaPad 3 15ALC6 Ub) in the
+master reference database table, and include the new contributor.
+
+Signed-off-by: Sergio Melas <sergiomelas@gmail.com>

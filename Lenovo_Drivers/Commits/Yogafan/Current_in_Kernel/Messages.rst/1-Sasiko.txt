@@ -1,0 +1,95 @@
+All of lore.kernel.org
+ help / color / mirror / Atom feed
+From: sashiko-bot@kernel.org
+To: "Sergio Melas" <sergiomelas@gmail.com>
+Cc: linux-hwmon@vger.kernel.org
+Subject: Re: [PATCH] hwmon: (yogafan) Update reference database and contributors for new models
+Date: Mon, 07 Sep 2026 11:41:59 +0000	[thread overview]
+Message-ID: <20260907114200.1651F1F00A3E@smtp.kernel.org> (raw)
+In-Reply-To: <20260907113029.1532654-1-sergiomelas@gmail.com>
+
+Thank you for your contribution! Sashiko AI review found 1 potential issue(s) to consider:
+- [Medium] The commit message and documentation claim support for new models (Yoga 740-15IML and IdeaPad 3 15ALC6 Ub), but the required driver code changes are completely missing, meaning the driver will fail to probe on these devices.
+--
+
+commit abc418693a23c59c4a3eff683b30c6c57e8bcc13
+Author: Sergio Melas <sergiomelas@gmail.com>
+
+hwmon: (yogafan) Update reference database and contributors for new models
+
+Add documentation entries for the newly supported laptop models
+(Yoga 14cACN 2021, Yoga 740-15IML, and IdeaPad 3 15ALC6 Ub) in the
+master reference database table, and include the new contributor.
+
+> diff --git a/Documentation/hwmon/yogafan.rst b/Documentation/hwmon/yogafan.rst
+> index 9ff5db5dc08ce..5c21c50b7c4fa 100644
+> --- a/Documentation/hwmon/yogafan.rst
+> +++ b/Documentation/hwmon/yogafan.rst
+> @@ -87,6 +87,9 @@ immediately to ensure the user knows the fan has stopped.
+>
+>   MODEL (DMI PN) | FAMILY / SERIES  | EC OFFSET | FULL ACPI OBJECT PATH          | WIDTH  | MULTiplier
+>   ----------------------------------------------------------------------------------------------------
+> + 82N7           | Yoga 14cACN 2021   | 0x06      | \_SB.PCI0.LPC0.EC0.FANS        |  8-bit | 100
+> + 81TD           | Yoga 740-15IML     | 0x06      | \_SB.PCI0.LPCB.EC0.FANS        |  8-bit | 100
+
+[Severity: Medium]
+Will the driver successfully probe on the Yoga 740-15IML?
+
+The commit message and documentation claim support for this model, but the
+driver code changes appear to be missing. The documentation specifies the
+LPCB ACPI path. When the driver probes on a Yoga 740-15IML, the generic
+Lenovo Yoga DMI quirk is matched, applying yoga_8bit_fans_cfg, which
+searches for the ACPI path \_SB.PCI0.LPC0.EC0.FANS.
+
+Since the device uses LPCB instead of LPC0, acpi_get_handle() will fail
+and the driver will return -ENODEV.
+
+> + 82KU           | IdeaPad 3 15ALC6 Ub| 0x06      | \_SB.PCI0.LPC0.EC0.FANS/FA2S   |  8-bit | 100
+
+[Severity: Medium]
+Will the driver successfully probe on the IdeaPad 3 15ALC6 Ub?
+
+The documentation specifies dual fans (FANS and FA2S), but the driver only
+contains a single-fan configuration (FAN0) for the IdeaPad 3 15ALC6 DMI match.
+
+When matching the generic IdeaPad 3 15ALC6 quirk (using ideapad_8bit_fan0_cfg),
+it will probe for FAN0 instead of the required dual-fan FANS and FA2S paths,
+resulting in probe failure. Are there driver changes missing from this patch?
+
+--
+Sashiko AI review · https://sashiko.dev/#/patchset/20260907113029.1532654-1-sergiomelas@gmail.com?part=1
+     prev parent reply	other threads:[~2026-09-07 11:42 UTC|newest]
+
+Thread overview: 2+ messages / expand[flat|nested]  mbox.gz  Atom feed  top
+2026-09-07 11:30 [PATCH] hwmon: (yogafan) Update reference database and contributors for new models Sergio Melas
+2026-09-07 11:41 ` sashiko-bot [this message]
+Reply instructions:
+
+You may reply publicly to this message via plain-text email
+using any one of the following methods:
+
+* Save the following mbox file, import it into your mail client,
+  and reply-to-all from there: mbox
+
+  Avoid top-posting and favor interleaved quoting:
+  https://en.wikipedia.org/wiki/Posting_style#Interleaved_style
+
+* Reply using the --to, --cc, and --in-reply-to
+  switches of git-send-email(1):
+
+  git send-email \
+    --in-reply-to=20260907114200.1651F1F00A3E@smtp.kernel.org \
+    --to=sashiko-bot@kernel.org \
+    --cc=linux-hwmon@vger.kernel.org \
+    --cc=sashiko-reviews@lists.linux.dev \
+    --cc=sergiomelas@gmail.com \
+    /path/to/YOUR_REPLY
+
+  https://kernel.org/pub/software/scm/git/docs/git-send-email.html
+
+* If your mail client supports setting the In-Reply-To header
+  via mailto: links, try the mailto: link
+Be sure your reply has a Subject: header at the top and a blank line before the message body.
+This is an external index of several public inboxes,
+see mirroring instructions on how to clone and mirror
+all data and code used by this external index.

@@ -1,0 +1,18 @@
+From: Sergio Melas <sergiomelas@gmail.com>
+Subject: Re: [PATCH v2] hwmon: (yogafan) Update reference database and contributors for new models
+To: Guenter Roeck <linux@roeck-us.net>
+Cc: linux-hwmon@vger.kernel.org, linux-kernel@vger.kernel.org
+
+Hi Guenter,
+
+Understood. My apologies, I misinterpreted your feedback and split the
+documentation thinking you wanted it strictly isolated from the driver changes.
+
+Since the driver patch is already in, please either apply this documentation
+update as-is to keep things in sync, or let me know if I should drop it
+and bundle it with the next patch set.
+
+Thanks,
+Sergio
+
+Signed-off-by: Sergio Melas <sergiomelas@gmail.com>
