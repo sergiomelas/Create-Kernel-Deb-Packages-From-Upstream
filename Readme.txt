@@ -317,6 +317,14 @@ Change log:
 * **EC Path Resolution**: Optimized embedded controller register calls for improved temperature polling and fan profile handling.
 * **Stability & Field Testing**: Validated core thermal control loops against real-world user hardware telemetry and DSDT traces.
 
+V1.3: 2026-09-11    - Mainline Documentation & Model Integration:
+                    - Officially merged documentation updates into the mainline Linux kernel,
+                      adding full support and tracking for the IdeaPad 3 15ALC6 Ub (82KU)
+                      and Yoga 740-15IML (81TD) models.
+                    - Polished reStructuredText table layouts, column boundaries, and device naming
+                      strings to keep builds clean and error-free.
+                    - Updated community contributor credits and DSDT data providers for the hardware database.
+
 V1.2: 2026-08-06    - Enhanced Platform Identification & Quirk Validation:
                     - Refined DMI platform identification mechanisms and broadened fallback tolerances
                       to ensure robust detection across supported Lenovo Yoga, IdeaPad, and Legion models.
